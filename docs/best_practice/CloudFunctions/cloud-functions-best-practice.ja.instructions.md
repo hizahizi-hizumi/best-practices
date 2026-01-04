@@ -1,4 +1,3 @@
-```instructions
 ---
 description: 'Cloud Functions (2nd gen) HTTPエンドポイント実装のベストプラクティス'
 applyTo: '**/*.js, **/*.ts, **/main.py'
@@ -617,4 +616,3 @@ const db = new Firestore(); // 関数外
 - [Functions Framework](https://github.com/GoogleCloudPlatform/functions-framework)
 - [Cloud Runベストプラクティス](https://cloud.google.com/run/docs/tips/general)
 
-```
