@@ -1,4 +1,3 @@
-````instructions
 ---
 description: 'VS Code Copilot のカスタムエージェント作成のベストプラクティス'
 applyTo: '**/.github/agents/**/*.agent.md, **/.github/chatmodes/**/*.chatmode.md'
@@ -423,4 +422,3 @@ tools: ["read", "search"]
 6. **モジュール化** - 再利用可能な指示を分離して保守性を向上させる
 7. **適切なモデル選択** - タスクの複雑さに基づいてモデルを選択する
 
-````
