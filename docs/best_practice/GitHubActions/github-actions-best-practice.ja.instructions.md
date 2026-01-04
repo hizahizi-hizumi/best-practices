@@ -1,4 +1,3 @@
-````instructions
 ---
 description: '安全で保守可能な GitHub Actions ワークフローとコンポジットアクションのベストプラクティス'
 applyTo: '**/.github/workflows/**/*.yml, **/.github/workflows/**/*.yaml, **/.github/actions/**/action.yml, **/.github/actions/**/action.yaml, **/action.yml, **/action.yaml'
@@ -413,4 +412,3 @@ strategy:
 - [GitHub Actions セキュリティベストプラクティス](https://docs.github.com/ja/actions/security-guides/security-hardening-for-github-actions)
 - [GITHUB_TOKEN 権限](https://docs.github.com/ja/actions/security-guides/automatic-token-authentication#permissions-for-the-github_token)
 - [Actions での OpenID Connect](https://docs.github.com/ja/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect)
-````
