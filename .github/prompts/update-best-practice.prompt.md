@@ -43,9 +43,9 @@ instructions ファイル名は `${input:tool}` からケバブケースを導�
 
 ### 1. 公式ドキュメントの探索
 - **タスク**: #tool:agent/runSubagent を使用してサブエージェントに委譲し、公式ドキュメントを再帰的に探索
-- **詳細**: `#tool:web/fetch を使用し ${input:tool} の公式ドキュメント ${input:url} を再帰的に探索し、ベストプラクティス作成に参考にするべきドキュメントのURLをまとめる。まとめた結果を docs/${input:tool}/url.md に記載する`
-- **検証**: `docs/${input:tool}/url.md` が作成され、関連URLが10件以上リストされていること
-- **既存ファイル**: `docs/${input:tool}/url.md` が存在する場合は、内容を更新して反映する
+- **詳細**: `#tool:web/fetch を使用し ${input:tool} の公式ドキュメント ${input:url} を再帰的に探索し、ベストプラクティス作成に参考にするべきドキュメントのURLをまとめる。まとめた結果を docs/best_practice/${input:tool}/url.md に記載する`
+- **検証**: `docs/best_practice/${input:tool}/url.md` が作成され、関連URLが10件以上リストされていること
+- **既存ファイル**: `docs/best_practice/${input:tool}/url.md` が存在する場合は、内容を更新して反映する
 
 ### 2. URL一覧の読み込み
 - **タスク**: #tool:read/readFile を使用し `docs/best_practice/${input:tool}/url.md` を読み込む
@@ -93,7 +93,7 @@ instructions ファイル名は `${input:tool}` からケバブケースを導�
 ## 出力期待値
 
 ### 成果物
-1. `docs/${input:tool}/url.md`: 参考URLの一覧
+1. `docs/best_practice/${input:tool}/url.md`: 参考URLの一覧
 2. `docs/best_practice/${input:tool}/best_practice.md`: 包括的なベストプラクティスドキュメント (日本語)
 3. `.github/instructions/<kebab-case(${input:tool})>-best-practice.instructions.md`: Copilot用instructions規則ファイル (日本語)
 
@@ -111,7 +111,7 @@ instructions ファイル名は `${input:tool}` からケバブケースを導�
 
 実行後、以下を確認してください:
 
-- [ ] `docs/${input:tool}/url.md` に10件以上の関連URLがリストされている
+- [ ] `docs/best_practice/${input:tool}/url.md` に10件以上の関連URLがリストされている
 - [ ] `docs/best_practice/${input:tool}/best_practice.md` が包括的で実践的な内容である
 - [ ] ベストプラクティスドキュメントに公式ドキュメントとウェブ検索の両方の知見が反映されている
 - [ ] instructionsファイルに適切な frontmatter (description, applyTo) が含まれている
