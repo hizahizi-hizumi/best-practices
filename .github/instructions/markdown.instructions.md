@@ -1,21 +1,94 @@
 ---
-description: 'Documentation and content creation standards'
+description: 'Markdown documentation standards for consistency and readability'
 applyTo: '**/*.md'
 ---
 
-## Markdown Content Rules
+# Markdown Documentation Standards
 
-The following markdown content rules are enforced in the validators:
+Guidelines for creating consistent, readable, and maintainable markdown documentation.
 
-1. **Headings**: Use appropriate heading levels (H2, H3, etc.) to structure your content. Do not use an H1 heading, as this will be generated based on the title.
-2. **Lists**: Use bullet points or numbered lists for lists. Ensure proper indentation and spacing.
-3. **Code Blocks**: Use fenced code blocks for code snippets. Specify the language for syntax highlighting.
-4. **Links**: Use proper markdown syntax for links. Ensure that links are valid and accessible.
-5. **Images**: Use proper markdown syntax for images. Include alt text for accessibility.
-6. **Tables**: Use markdown tables for tabular data. Ensure proper formatting and alignment.
-7. **Line Length**: Limit line length to 400 characters for readability.
-8. **Whitespace**: Use appropriate whitespace to separate sections and improve readability.
-9. **Front Matter**: Include YAML front matter at the beginning of the file with required metadata fields.
+## Purpose and Scope
+
+Apply markdown formatting standards to all documentation files to ensure consistent structure, accessibility, and maintainability across the project.
+
+## Document Structure
+
+### Start with H2, Not H1
+Omit H1 headings (`#`) as document title is generated from filename or frontmatter.
+
+**Rationale**: Automated tooling generates H1 from metadata, duplicate H1 breaks document hierarchy.
+
+### Use Hierarchical Headings
+Progress from H2 (`##`) to H3 (`###`) without skipping levels.
+Restructure content if H4 or deeper levels are needed.
+
+**Rationale**: Flat heading structure improves readability and screen reader navigation.
+
+```markdown
+<!-- Recommended -->
+## Main Section
+### Subsection
+### Another Subsection
+
+<!-- Not Recommended -->
+## Main Section
+#### Deep Subsection (skips H3)
+```
+
+### Separate Sections with Blank Lines
+Place one blank line before and after headings, code blocks, lists, and tables.
+
+```markdown
+<!-- Recommended -->
+Previous paragraph.
+
+## New Section
+
+First paragraph of section.
+
+<!-- Not Recommended -->
+Previous paragraph.
+## New Section
+First paragraph of section.
+```
+
+## Lists
+
+### Use Consistent List Markers
+Use `-` for unordered lists and `1.` for ordered lists.
+Indent nested lists with two spaces.
+
+```markdown
+<!-- Recommended -->
+- First item
+- Second item
+  - Nested item
+  - Another nested item
+- Third item
+
+1. First step
+2. Second step
+   1. Sub-step
+3. Third step
+
+<!-- Not Recommended -->
+* Mixed markers
+- In same list
+  * Creates confusion
+```
+
+### Break Long List Items
+Limit list item line length to 80 characters.
+Continue on next line with proper indentation.
+
+```markdown
+<!-- Recommended -->
+- This is a long list item that exceeds 80 characters
+  and continues on the next line with proper indentation
+
+<!-- Not Recommended -->
+- This is a very long list item that goes on and on without breaking which makes it hard to read in source form
+```
 
 ## Formatting and Structure
 

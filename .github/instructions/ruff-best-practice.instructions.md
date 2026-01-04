@@ -1,205 +1,147 @@
 ---
-description: 'Ruff を使用した Python コード品質管理のベストプラクティスとガイドライン'
+description: 'Best practices and guidelines for Python code quality management using Ruff'
 applyTo: '**/*.py, **/pyproject.toml, **/ruff.toml, **/.ruff.toml'
 ---
 
-# Ruff コード品質管理
+# Ruff Code Quality Management
 
-Ruff は Rust で実装された高速な Python linter および formatter です。本ファイルでは Ruff を使用したコード品質管理のベストプラクティスを説明します。
+Ruff is a high-performance Python linter and formatter implemented in Rust. This file explains best practices for code quality management using Ruff.
 
-## プロジェクトコンテキスト
+## Scope and Tool Overview
 
-- **対象**: Python 3.10 以降のプロジェクト
-- **ツール**: Ruff（linter + formatter）
-- **置き換え可能**: Black, Flake8, isort, pydocstyle, pyupgrade
-- **特徴**: 10-100 倍高速、800 以上のルール、自動修正対応
+- Use Ruff for Python 3.10+ projects as unified linter and formatter
+- Replace Black, Flake8, isort, pydocstyle, pyupgrade with Ruff
+- Leverage Ruff's 10-100x speed improvement and 800+ rules
 
-## 基本設定
+## Basic Configuration
 
-### インストール
+### Installation
+
+- Install Ruff using `uv tool install ruff@latest` and `uv add --dev ruff`
+- Alternatively use `pip install ruff` if uv is not available
 
 ```bash
-# uv を使用（推奨）
 uv tool install ruff@latest
 uv add --dev ruff
-
-# または pip
-pip install ruff
 ```
 
-### 基本実行コマンド
+### Basic Execution Commands
+
+- Run linter with auto-fix using `ruff check --fix .`
+- Run formatter using `ruff format .`
+- Execute both in order: `ruff check --fix . && ruff format .`
 
 ```bash
-# Linter を実行（自動修正付き）
-ruff check --fix .
-
-# Formatter を実行
-ruff format .
-
-# 両方を実行（推奨順序）
 ruff check --fix . && ruff format .
 ```
 
-## Linter のベストプラクティス
+## Linter Best Practices
 
-### ルール選択
+### Rule Selection
 
-段階的にルールを追加することを推奨：
+- Start with minimal rules: `["E4", "E7", "E9", "F"]`
+- Use recommended balanced set: `["E", "F", "UP", "B", "SIM", "I", "N", "ASYNC"]`
+- Add rules incrementally to avoid overwhelming changes
 
 ```toml
-# 最小限の設定
+# Recommended configuration
 [tool.ruff.lint]
-select = ["E4", "E7", "E9", "F"]
-
-# 推奨設定（バランス型）
-[tool.ruff.lint]
-select = [
-    "E",      # pycodestyle errors
-    "F",      # Pyflakes
-    "UP",     # pyupgrade
-    "B",      # flake8-bugbear
-    "SIM",    # flake8-simplify
-    "I",      # isort
-    "N",      # pep8-naming
-    "ASYNC",  # flake8-async
-]
-
-# 厳格な設定
-[tool.ruff.lint]
-select = [
-    "E", "W", "F", "UP", "B", "SIM", "I", "N", "ASYNC",
-    "C4", "DTZ", "T10", "EM", "ISC", "ICN", "PIE", "PT",
-    "Q", "RSE", "RET", "SLF", "TCH", "ARG", "PTH", "ERA",
-    "PL", "TRY", "RUF",
-]
-ignore = ["PLR0913", "TRY003"]
+select = ["E", "F", "UP", "B", "SIM", "I", "N", "ASYNC"]
 ```
 
-### 新しいルールの追加
+### Adding New Rules
 
-`select` より `extend-select` を使用：
+- Use `extend-select` instead of `select` to add rules incrementally
 
 ```toml
 [tool.ruff.lint]
 extend-select = ["B", "UP", "I"]
 ```
 
-### ファイルごとの例外設定
+### Per-File Exception Configuration
+
+- Configure per-file ignores using `[tool.ruff.lint.per-file-ignores]`
+- Allow unused imports in `__init__.py` with `F401`
+- Allow `assert` in test files with `S101`
 
 ```toml
 [tool.ruff.lint.per-file-ignores]
-"__init__.py" = ["F401"]              # 未使用 import を許可
-"tests/**/*.py" = ["S101"]            # assert を許可
-"**/{tests,docs,tools}/*" = ["E402"]  # import 順序を許可
+"__init__.py" = ["F401"]
+"tests/**/*.py" = ["S101"]
 ```
 
-### エラー抑制
+### Error Suppression
+
+- Suppress line-level errors using `# noqa: RULE`
+- Suppress multiple rules with comma-separated list: `# noqa: E741, F841`
 
 ```python
-# 行レベルの抑制
 import os  # noqa: F401
-
-# 複数のルールを無視
 x = 1  # noqa: E741, F841
-
-# ブロックレベルの抑制（preview モード）
-# ruff: disable[E501]
-VALUE = "very long string..."
-# ruff: enable[E501]
 ```
 
-### 未使用の noqa 検出
+### Detecting Unused noqa Comments
 
-```bash
-# 未使用の noqa を検出・削除
-ruff check --extend-select RUF100 --fix
-```
+- Detect and remove unused `noqa` comments using `ruff check --extend-select RUF100 --fix`
 
-### Fix の安全性
+### Fix Safety
 
-```bash
-# Safe fix のみ（デフォルト）
-ruff check --fix
-
-# Unsafe fix も適用
-ruff check --fix --unsafe-fixes
-```
-
-設定での制御：
+- Apply only safe fixes by default with `ruff check --fix`
+- Include unsafe fixes using `--unsafe-fixes` flag
+- Control globally via `[tool.ruff] unsafe-fixes = true`
 
 ```toml
 [tool.ruff]
-unsafe-fixes = true  # プロジェクト全体で有効化
-
-[tool.ruff.lint]
-extend-safe-fixes = ["F601"]      # safe に昇格
-extend-unsafe-fixes = ["UP034"]   # unsafe に降格
+unsafe-fixes = true
 ```
 
-## Formatter のベストプラクティス
+## Formatter Best Practices
 
-### Black 互換設定
+### Black-Compatible Configuration
+
+- Set `line-length = 88` and `quote-style = "double"` for Black compatibility
+- Use `skip-magic-trailing-comma = false` to match Black behavior
 
 ```toml
 [tool.ruff]
 line-length = 88
-indent-width = 4
 
 [tool.ruff.format]
 quote-style = "double"
-indent-style = "space"
-skip-magic-trailing-comma = false
-line-ending = "auto"
 ```
 
-### Docstring のフォーマット
+### Docstring Formatting
+
+- Enable docstring code formatting with `docstring-code-format = true`
+- Use `docstring-code-line-length = "dynamic"` for automatic line length
 
 ```toml
 [tool.ruff.format]
-# Docstring 内のコード例を自動フォーマット
 docstring-code-format = true
-
-# Docstring 内のコードの行長制限
 docstring-code-line-length = "dynamic"
 ```
 
-### フォーマット抑制
+### Format Suppression
 
-```python
-# fmt: off
-not_formatted = [1,2,3,4]
-# fmt: on
+- Use `# fmt: off` and `# fmt: on` for block-level suppression
+- Use `# fmt: skip` for single-line suppression
 
-# 単一の文をスキップ
-not_formatted = [1,2,3,4]  # fmt: skip
-```
+### Avoiding Formatter and Linter Conflicts
 
-### Formatter と Linter の競合回避
-
-以下のルールは formatter と競合するため無効化を推奨：
+- Ignore formatter-conflicting rules: `W191`, `E111`, `E114`, `E117`, `D206`, `D300`, `COM812`, `COM819`, `ISC002`
 
 ```toml
 [tool.ruff.lint]
-ignore = [
-    "W191",   # tab-indentation
-    "E111",   # indentation-with-invalid-multiple
-    "E114",   # indentation-with-invalid-multiple-comment
-    "E117",   # over-indented
-    "D206",   # docstring-tab-indentation
-    "D300",   # triple-single-quotes
-    "Q000",   # bad-quotes-inline-string
-    "Q001",   # bad-quotes-multiline-string
-    "Q002",   # bad-quotes-docstring
-    "Q003",   # avoidable-escaped-quote
-    "COM812", # missing-trailing-comma
-    "COM819", # prohibited-trailing-comma
-    "ISC002", # multi-line-implicit-string-concatenation
-]
+ignore = ["W191", "E111", "E114", "E117", "D206", "D300", "COM812", "COM819", "ISC002"]
 ```
 
-## 設定ファイル構造
+## Configuration File Structure
 
-### 推奨される最小設定（pyproject.toml）
+### Recommended Minimal Configuration (pyproject.toml)
+
+- Configure Ruff in `pyproject.toml` with minimal required settings
+- Specify Python version, line length, and core rule sets
+- Use `extend-exclude` for ignored directories
 
 ```toml
 [project]
@@ -210,7 +152,7 @@ line-length = 88
 target-version = "py310"
 required-version = ">=0.14.0"
 
-# ファイル検索の設定
+# File search configuration
 extend-exclude = [".venv", "build", "dist"]
 src = ["src", "tests"]
 
@@ -236,9 +178,9 @@ quote-style = "double"
 docstring-code-format = true
 ```
 
-### ruff.toml での設定
+### Configuration with ruff.toml
 
-`ruff.toml` または `.ruff.toml` を使用する場合、`[tool.ruff]` ヘッダーは不要：
+- Use `ruff.toml` or `.ruff.toml` for standalone configuration (omit `[tool.ruff]` header)
 
 ```toml
 line-length = 88
@@ -250,44 +192,50 @@ select = ["E", "F"]
 quote-style = "double"
 ```
 
-### 設定の継承
+### Configuration Inheritance
+
+- Extend parent configuration using `extend = "../pyproject.toml"`
+- Override specific settings in child configuration
 
 ```toml
 [tool.ruff]
 extend = "../pyproject.toml"
-line-length = 100  # 親設定を上書き
+line-length = 100  # Override parent setting
 ```
 
-## Docstring とタイプヒント
+## Docstrings and Type Hints
 
-### Docstring スタイルの強制
+### Enforcing Docstring Style
+
+- Enable docstring rules with `select = ["D"]`
+- Specify convention: `google`, `numpy`, or `pep257`
 
 ```toml
 [tool.ruff.lint]
 select = ["D"]
 
 [tool.ruff.lint.pydocstyle]
-convention = "google"  # または "numpy", "pep257"
+convention = "google"
 ```
 
-### タイプヒント関連ルール
+### Type Hint Related Rules
+
+- Enable type hint rules with `select = ["ANN", "TCH"]`
+- Use `future-annotations = true` to enable `from __future__ import annotations`
 
 ```toml
 [tool.ruff.lint]
-select = [
-    "ANN",  # flake8-annotations
-    "TCH",  # flake8-type-checking
-]
-
-# future annotations を自動追加
+select = ["ANN", "TCH"]
 future-annotations = true
 ```
 
-## CI/CD 統合
+## CI/CD Integration
 
 ### GitHub Actions
 
-基本設定：
+- Use `astral-sh/ruff-action@v3` for basic setup
+- Use `--output-format=github` for proper annotations
+- Run formatter check with `ruff format --check`
 
 ```yaml
 name: Ruff
@@ -301,57 +249,10 @@ jobs:
       - uses: astral-sh/ruff-action@v3
 ```
 
-詳細な設定：
-
-```yaml
-name: CI
-on: push
-
-jobs:
-  quality:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      
-      - name: Install Ruff
-        run: pip install ruff
-      
-      - name: Run Ruff Linter
-        run: ruff check --output-format=github .
-      
-      - name: Run Ruff Formatter
-        run: ruff format --check .
-```
-
-### GitLab CI/CD
-
-```yaml
-.base_ruff:
-  stage: build
-  image: ghcr.io/astral-sh/ruff:latest-alpine
-  before_script:
-    - ruff --version
-
-Ruff Check:
-  extends: .base_ruff
-  script:
-    - ruff check --output-format=gitlab --output-file=code-quality-report.json
-  artifacts:
-    reports:
-      codequality: $CI_PROJECT_DIR/code-quality-report.json
-
-Ruff Format:
-  extends: .base_ruff
-  script:
-    - ruff format --diff
-```
-
 ### pre-commit
+
+- Place `ruff-check` before `ruff-format` (order matters)
+- Use `args: [--fix]` for auto-fixing
 
 ```yaml
 repos:
@@ -363,11 +264,13 @@ repos:
       - id: ruff-format
 ```
 
-**重要**: `ruff-check` は `ruff-format` の前に配置する必要があります。
-
-## エディタ統合
+## Editor Integration
 
 ### VS Code
+
+- Set `editor.defaultFormatter` to `charliermarsh.ruff`
+- Enable `editor.formatOnSave` and `source.fixAll` on save
+- Configure `ruff.lint.run` to `onSave`
 
 ```json
 {
@@ -375,45 +278,38 @@ repos:
     "editor.defaultFormatter": "charliermarsh.ruff",
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
-      "source.fixAll": "explicit",
-      "source.organizeImports": "explicit"
+      "source.fixAll": "explicit"
     }
-  },
-  "ruff.lint.run": "onSave"
+  }
 }
 ```
 
 ### PyCharm / IntelliJ
 
-1. Settings → Tools → Ruff
-2. Enable Ruff
-3. Ruff executable のパスを設定
+- Enable Ruff in Settings → Tools → Ruff and set executable path
 
-## 移行ガイド
+## Migration Guide
 
-### Black からの移行
+### Migrating from Black
+
+- Remove `[tool.black]` section from pyproject.toml
+- Add Ruff format configuration with `line-length = 88` and `quote-style = "double"`
 
 ```toml
-# Black の [tool.black] セクションを削除
-
-# Ruff の設定を追加
 [tool.ruff]
 line-length = 88
 
 [tool.ruff.format]
 quote-style = "double"
-indent-style = "space"
 ```
 
-### Flake8 からの移行
+### Migrating from Flake8
+
+- Transfer `max-line-length` to `[tool.ruff] line-length`
+- Convert ignored codes to `[tool.ruff.lint] ignore` array
+- Map plugins: flake8-bugbear→B, flake8-simplify→SIM, pep8-naming→N, flake8-comprehensions→C4
 
 ```toml
-# Flake8 の .flake8 設定
-# [flake8]
-# max-line-length = 88
-# ignore = E203, W503
-
-# Ruff の設定
 [tool.ruff]
 line-length = 88
 
@@ -421,21 +317,13 @@ line-length = 88
 ignore = ["E203", "W503"]
 ```
 
-プラグインのマッピング：
+### Migrating from isort
 
-| Flake8 プラグイン | Ruff ルール |
-|------------------|------------|
-| flake8-bugbear   | B          |
-| flake8-simplify  | SIM        |
-| pep8-naming      | N          |
-| flake8-comprehensions | C4    |
-
-### isort からの移行
+- Remove `[tool.isort]` section
+- Enable import sorting with `select = ["I"]`
+- Configure `known-first-party` under `[tool.ruff.lint.isort]`
 
 ```toml
-# isort の [tool.isort] セクションを削除
-
-# Ruff の設定
 [tool.ruff.lint]
 select = ["I"]
 
@@ -443,88 +331,54 @@ select = ["I"]
 known-first-party = ["myproject"]
 ```
 
-## トラブルシューティング
+## Troubleshooting
 
-### 行長違反が残る
+### Line Length Violations Remain
 
-Formatter は行長のベストエフォートのため、`E501` を無視：
+- Ignore `E501` since formatter applies best-effort line length
 
 ```toml
 [tool.ruff.lint]
 ignore = ["E501"]
 ```
 
-### 設定が反映されない
+### Configuration Not Applied
 
-```bash
-# 設定ファイルの位置を確認
-ruff check --show-settings path/to/file.py
+- Check settings with `ruff check --show-settings path/to/file.py`
+- Clear cache using `ruff clean`
 
-# キャッシュをクリア
-ruff clean
-```
+### Jupyter Notebook Support
 
-### Jupyter Notebook のサポート
+- Ignore notebook-specific rules via per-file-ignores
 
 ```toml
-# Notebook で特定のルールを無視
 [tool.ruff.lint.per-file-ignores]
 "*.ipynb" = ["E402", "T20"]
 ```
 
-### Preview モードのルールが不安定
+## Configuration Verification
 
-```toml
-[tool.ruff]
-# 本番環境では preview モードを無効化
-preview = false
-```
+- Verify active settings with `ruff check --show-settings path/to/file.py`
+- List configuration files with `ruff check --show-files`
+- Clear cache using `ruff clean`
 
-## 設定の検証
+## Phased Adoption Plan
 
-```bash
-# 使用されている設定を確認
-ruff check --show-settings path/to/file.py
+- **Week 1**: Install Ruff, run with defaults, fix auto-fixable errors
+- **Week 2**: Enable additional rule sets, integrate CI/CD, configure pre-commit
+- **Week 3**: Enable formatter, set up editor integration
+- **Week 4**: Fine-tune configuration, remove old Flake8/Black settings
 
-# 設定ファイルのパスを確認
-ruff check --show-files
+## Setup Checklist
 
-# キャッシュをクリア
-ruff clean
-```
+- Install Ruff to project
+- Add basic configuration to `pyproject.toml`
+- Integrate into CI/CD pipeline
+- Install Ruff extension in editor
+- Configure pre-commit hooks
+- Notify team members
 
-## 段階的導入プラン
+## Reference Links
 
-**Week 1**: 
-- Ruff をインストール
-- デフォルト設定で実行
-- 自動修正可能なエラーを修正
-
-**Week 2**:
-- 追加のルールセットを有効化
-- CI/CD に統合
-- pre-commit フックを設定
-
-**Week 3**:
-- Formatter を有効化
-- エディタ統合を設定
-
-**Week 4**:
-- 設定の微調整
-- 既存の Flake8/Black 設定を削除
-
-## チェックリスト
-
-- [ ] プロジェクトに Ruff をインストール
-- [ ] `pyproject.toml` に基本設定を追加
-- [ ] CI/CD パイプラインに統合
-- [ ] エディタに Ruff 拡張機能をインストール
-- [ ] pre-commit フックを設定
-- [ ] チームメンバーに変更を通知
-
-## 参考リンク
-
-- [Ruff 公式ドキュメント](https://docs.astral.sh/ruff/)
-- [ルールリファレンス](https://docs.astral.sh/ruff/rules/)
-- [設定オプション](https://docs.astral.sh/ruff/settings/)
-- [GitHub リポジトリ](https://github.com/astral-sh/ruff)
+- [Ruff Documentation](https://docs.astral.sh/ruff/)
+- [Rule Reference](https://docs.astral.sh/ruff/rules/)

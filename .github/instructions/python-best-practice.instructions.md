@@ -1,201 +1,163 @@
 ---
-description: 'PEP 8準拠のPythonコーディング規約とベストプラクティス'
+description: 'PEP 8-compliant Python coding standards and best practices'
 applyTo: '**/*.py'
 ---
 
-# Python ベストプラクティス
+# Python Best Practices
 
-Python公式ドキュメントとPEP 8に基づいた、実践的なPythonコーディングのベストプラクティスです。このガイドラインに従うことで、可読性が高く、保守しやすい高品質なPythonコードを作成できます。
+## Project Context
 
-## プロジェクトコンテキスト
+- Target Language: Python 3.10 or later
+- Style Guide: PEP 8
+- Type Checker: Mypy
+- Formatter: Black
+- Import Organizer: isort
 
-- 対象言語: Python 3.10以降
-- スタイルガイド: PEP 8 (Python Enhancement Proposal 8)
-- 型チェック: Mypy推奨
-- フォーマッター: Black推奨
-- インポート整理: isort推奨
+## Coding Style
 
-## コーディングスタイル
+### Indentation and Whitespace
 
-### インデントと空白
-
-- **4スペースインデント**を使用する（タブは使用しない）
-- 行の長さは**79文字以内**に制限する
-- 関数やクラスの間には**2行の空行**を挿入する
-- クラス内のメソッド間には**1行の空行**を挿入する
-- 関数内の論理的なセクション間には空行を適度に使用する
+- Use 4-space indentation (no tabs)
+- Limit line length to 79 characters
+- Insert 2 blank lines between functions and classes
+- Insert 1 blank line between methods within a class
 
 ```python
-# 良い例
+# Good example
 def first_function():
-    """最初の関数。"""
+    """First function."""
     pass
 
 
 def second_function():
-    """2番目の関数。"""
+    """Second function."""
     pass
 
 
 class MyClass:
-    """サンプルクラス。"""
-    
+    """Sample class."""
+
     def method_one(self):
-        """最初のメソッド。"""
+        """First method."""
         pass
-    
+
     def method_two(self):
-        """2番目のメソッド。"""
+        """Second method."""
         pass
 ```
 
-### 演算子とスペース
+### Operators and Spaces
 
-演算子の前後とコンマの後にスペースを入れるが、括弧の直後には入れない：
+- Insert spaces around operators and after commas
+- Do not insert spaces immediately after opening brackets
 
 ```python
-# 良い例
+# Recommended
 result = function(arg1, arg2) + another_function(arg3, arg4)
-x = 1
-y = 2
-total = x + y
 
-# 悪い例
+# Not recommended
 result=function( arg1,arg2 )+another_function( arg3,arg4 )
 ```
 
-## 命名規則
+## Naming Conventions
 
-| 対象 | 規則 | 例 |
-|------|------|-----|
-| クラス名 | `UpperCamelCase` | `MyClass`, `DataProcessor` |
-| 関数・メソッド名 | `lowercase_with_underscores` | `my_function`, `calculate_total` |
-| 変数名 | `lowercase_with_underscores` | `user_name`, `total_count` |
-| 定数 | `UPPER_CASE_WITH_UNDERSCORES` | `MAX_SIZE`, `DEFAULT_TIMEOUT` |
-| モジュール名 | `lowercase` (アンダースコア可) | `mymodule`, `data_parser` |
-| プライベート属性 | `_leading_underscore` | `_internal_value` |
+| Target | Convention | Example |
+|--------|------------|---------|
+| Class names | `UpperCamelCase` | `MyClass`, `DataProcessor` |
+| Function/method names | `lowercase_with_underscores` | `my_function`, `calculate_total` |
+| Variable names | `lowercase_with_underscores` | `user_name`, `total_count` |
+| Constants | `UPPER_CASE_WITH_UNDERSCORES` | `MAX_SIZE`, `DEFAULT_TIMEOUT` |
+| Module names | `lowercase` (underscores allowed) | `mymodule`, `data_parser` |
+| Private attributes | `_leading_underscore` | `_internal_value` |
 
 ```python
-# 良い例
+# Recommended
 class UserManager:
-    """ユーザー管理クラス。"""
-    
-    MAX_USERS = 1000  # 定数
-    
+    """User management class."""
+
+    MAX_USERS = 1000  # Constant
+
     def __init__(self):
-        self._users = []  # プライベート属性
-    
+        self._users = []  # Private attribute
+
     def add_user(self, user_name: str) -> bool:
-        """ユーザーを追加する。"""
+        """Add a user."""
         if len(self._users) < self.MAX_USERS:
             self._users.append(user_name)
             return True
         return False
 ```
 
-### メソッドの特殊な引数名
+### Method Argument Names
 
-- インスタンスメソッドの最初の引数: **`self`**
-- クラスメソッドの最初の引数: **`cls`**
+- Use `self` for the first argument of instance methods
+- Use `cls` for the first argument of class methods
 
-```python
-class MyClass:
-    def instance_method(self, arg):
-        """インスタンスメソッド。"""
-        pass
-    
-    @classmethod
-    def class_method(cls, arg):
-        """クラスメソッド。"""
-        pass
-    
-    @staticmethod
-    def static_method(arg):
-        """静的メソッド。"""
-        pass
-```
+## Import Best Practices
 
-## インポートのベストプラクティス
+### Import Order
 
-### インポートの順序
+1. Standard library imports
+2. Third-party library imports
+3. Local module imports
 
-以下の順序でインポートを記述し、各グループ間に空行を挿入する：
-
-1. 標準ライブラリモジュール
-2. サードパーティライブラリモジュール
-3. ローカル開発モジュール
+Insert a blank line between each group.
 
 ```python
-# 良い例
-# 標準ライブラリ
+# Recommended
 import os
-import sys
-from pathlib import Path
-from typing import List, Optional
+from typing import List
 
-# サードパーティライブラリ
 import numpy as np
 import requests
-from flask import Flask, request
 
-# ローカルモジュール
 from myproject.core import database
-from myproject.utils import helpers
 ```
 
-### インポートの禁止事項
+### Import Restrictions
 
-```python
-# 悪い例：ワイルドカードインポート（使用禁止）
-from module import *
+- Do not use wildcard imports (`from module import *`)
 
-# 良い例：明示的なインポート
-from module import function1, function2
-```
+**Reason**: Namespace pollution, difficulty detecting undefined names, unclear dependencies
 
-**理由**:
-- 名前空間を汚染する
-- 未定義名の検出が困難になる
-- コードの依存関係が不明確になる
+### Import Placement
 
-### インポートの配置
+- Place imports at the top of the module
+- Use imports within functions or classes only to avoid circular dependencies
 
-- モジュールの**先頭**でインポートを行う
-- 関数やクラス内でのインポートは、循環インポートの回避が必要な場合のみ許可
+## Functions and Documentation
 
-## 関数とドキュメンテーション
+### Writing Docstrings
 
-### docstringの記述
-
-すべての公開関数、メソッド、クラスに**docstring**を記述する：
+- Write docstrings for all public functions, methods, and classes
 
 ```python
 def calculate_sum(numbers: List[int]) -> int:
-    """数値のリストの合計を計算する。
-    
+    """Calculate the sum of a list of numbers.
+
     Args:
-        numbers: 合計を計算する整数のリスト
-    
+        numbers: List of integers to sum
+
     Returns:
-        すべての数値の合計
-    
+        Sum of all numbers
+
     Raises:
-        ValueError: リストが空の場合
+        ValueError: If the list is empty
     """
     if not numbers:
-        raise ValueError("リストが空です")
+        raise ValueError("List is empty")
     return sum(numbers)
 ```
 
-### docstringの構造
+### Docstring Structure
 
-- **1行目**: 大文字で始まり、ピリオドで終わる簡潔な要約
-- **2行目**: 空行
-- **3行目以降**: 詳細な説明、引数、戻り値、例外などを記述
+- Line 1: Concise summary starting with a capital letter and ending with a period
+- Line 2: Blank line
+- Line 3 onwards: Describe Args, Returns, and Raises
 
-### 型ヒント
+### Type Hints
 
-Python 3.10以降では型ヒントを積極的に使用する：
+- Use type hints actively
 
 ```python
 from typing import List, Dict, Optional, Union
@@ -204,466 +166,309 @@ def process_users(
     user_ids: List[int],
     options: Optional[Dict[str, str]] = None
 ) -> Dict[int, str]:
-    """ユーザーIDを処理してユーザー情報を返す。
-    
+    """Process user IDs and return user information.
+
     Args:
-        user_ids: 処理するユーザーIDのリスト
-        options: オプションのパラメータ辞書
-    
+        user_ids: List of user IDs to process
+        options: Optional parameter dictionary
+
     Returns:
-        ユーザーIDをキー、ユーザー名を値とする辞書
+        Dictionary with user IDs as keys and user names as values
     """
     if options is None:
         options = {}
-    
+
     return {user_id: f"User_{user_id}" for user_id in user_ids}
 ```
 
-### デフォルト引数の注意点
+### Default Arguments
 
-**ミュータブルなオブジェクト（リスト、辞書など）をデフォルト値として使用しない**：
+- Do not use mutable objects (lists, dictionaries, etc.) as default values
 
 ```python
-# 悪い例
+# Not recommended
 def append_to_list(item, my_list=[]):
     my_list.append(item)
     return my_list
 
-# 良い例
+# Recommended
 def append_to_list(item, my_list=None):
-    """アイテムをリストに追加する。"""
     if my_list is None:
         my_list = []
     my_list.append(item)
     return my_list
 ```
 
-**理由**: デフォルト値は関数定義時に一度だけ評価されるため、ミュータブルなオブジェクトを使用すると予期しない動作を引き起こす。
+**Reason**: Default values are evaluated only once at definition time and can cause unexpected behavior
 
-## エラー処理
+## Error Handling
 
-### 具体的な例外を処理
+### Handle Specific Exceptions
+
+- Catch specific exception classes
+- Avoid broad `Exception` catches
 
 ```python
-# 良い例：特定の例外を処理
+# Recommended
 try:
     with open('config.json', 'r') as f:
         config = json.load(f)
 except FileNotFoundError:
-    logger.error("設定ファイルが見つかりません")
+    logger.error("Configuration file not found")
     config = get_default_config()
 except json.JSONDecodeError as e:
-    logger.error(f"JSONパースエラー: {e}")
+    logger.error(f"JSON parse error: {e}")
     raise
 except Exception as e:
-    logger.error(f"予期しないエラー: {e}")
+    logger.error(f"Unexpected error: {e}")
     raise
-
-# 悪い例：広範な例外処理
-try:
-    do_something()
-except Exception:  # 避けるべき
-    pass
 ```
 
-### else節とfinally節の活用
+### else and finally Clauses
+
+- Use the else clause to describe processing when no exception occurs
+- Use the finally clause to always execute cleanup processing
+
+### Resource Management with with Statements
+
+- Use with statements for resources such as files, database connections, and locks
 
 ```python
-# else節：例外が発生しなかった場合のみ実行
-try:
-    f = open('data.txt', 'r')
-except FileNotFoundError:
-    logger.error("ファイルが見つかりません")
-else:
-    # 例外が発生しなかった場合のみ実行
-    data = f.read()
-    f.close()
-    process_data(data)
-
-# finally節：必ず実行されるクリーンアップ
-try:
-    connection = create_connection()
-    execute_query(connection)
-except DatabaseError as e:
-    logger.error(f"データベースエラー: {e}")
-    raise
-finally:
-    # 必ず実行される
-    if connection:
-        connection.close()
-```
-
-### with文によるリソース管理
-
-ファイル、データベース接続、ロックなどのリソースには**with文**を使用する：
-
-```python
-# 良い例：with文を使用
+# Recommended
 with open('file.txt', 'r') as f:
     content = f.read()
     process(content)
-
-# 複数のリソース
-with open('input.txt', 'r') as infile, open('output.txt', 'w') as outfile:
-    for line in infile:
-        outfile.write(process_line(line))
 ```
 
-### カスタム例外
+### Custom Exceptions
 
-プロジェクト固有の例外を定義する際は、`Exception`を継承し、名前を"Error"で終わらせる：
+- Inherit from `Exception`
+- End the name with "Error"
 
 ```python
-class ValidationError(Exception):
-    """検証エラーの基底クラス。"""
-    pass
-
-
 class UserNotFoundError(Exception):
-    """ユーザーが見つからない場合の例外。"""
-    
     def __init__(self, user_id: int):
         self.user_id = user_id
-        super().__init__(f"ユーザーID {user_id} が見つかりません")
+        super().__init__(f"User ID {user_id} not found")
 ```
 
-### 例外チェーン
+### Exception Chaining
 
-例外の原因を明確にするため、例外チェーンを使用する：
+- Use the `from e` syntax for exception chaining to clarify the cause
 
-```python
-try:
-    connect_to_database()
-except ConnectionError as e:
-    raise DatabaseConnectionError('データベース接続に失敗しました') from e
-```
+## Data Structures and Algorithms
 
-## データ構造とアルゴリズム
+### String Concatenation
 
-### 文字列の連結
-
-複数の文字列を連結する場合は、リストに追加してから`str.join()`を使用する：
+- Use `str.join()` to concatenate multiple strings
+- Avoid `+=` concatenation in loops
 
 ```python
-# 良い例：効率的
-parts = []
-for item in items:
-    parts.append(str(item))
-result = ', '.join(parts)
-
-# さらに良い例：リスト内包表記
+# Recommended
 result = ', '.join(str(item) for item in items)
 
-# 悪い例：非効率
+# Not recommended
 result = ''
 for item in items:
     result += str(item) + ', '
 ```
 
-### リスト内包表記とジェネレータ式
+### List Comprehensions and Generator Expressions
+
+- Use list comprehensions for concise loops
+- Use generator expressions for large amounts of data
+- Utilize dictionary and set comprehensions
 
 ```python
-# リスト内包表記：メモリにリストを作成
 squares = [x**2 for x in range(10)]
-
-# ジェネレータ式：メモリ効率が良い
-squares_gen = (x**2 for x in range(10))
-
-# 条件付き内包表記
+squares_gen = (x**2 for x in range(10))  # Memory efficient
 even_squares = [x**2 for x in range(10) if x % 2 == 0]
-
-# 辞書内包表記
-user_dict = {user.id: user.name for user in users}
 ```
 
-### 適切なデータ構造の選択
+### Choosing Appropriate Data Structures
 
-| データ構造 | 用途 | 特徴 |
-|-----------|------|------|
-| `list` | 順序付きコレクション | 可変、インデックスアクセス |
-| `tuple` | 不変な順序付きコレクション | イミュータブル |
-| `set` | 一意な要素のコレクション | 高速な検索、順序なし |
-| `dict` | キー・バリューペア | 高速な検索 |
-| `collections.deque` | 両端キュー | 高速な両端操作 |
-| `collections.defaultdict` | デフォルト値付き辞書 | キーがない場合も安全 |
-| `collections.Counter` | カウンター | 要素の出現回数を集計 |
+| Data Structure | Use Case | Characteristics |
+|----------------|----------|-----------------|
+| `list` | Ordered collection | Mutable, index access |
+| `tuple` | Immutable ordered collection | Immutable |
+| `set` | Collection of unique elements | Fast search, unordered |
+| `dict` | Key-value pairs | Fast search |
+| `collections.deque` | Double-ended queue | Fast operations at both ends |
+| `collections.defaultdict` | Dictionary with default values | Safe even when keys are missing |
+| `collections.Counter` | Counter | Tallies element occurrences |
 
 ```python
 from collections import defaultdict, Counter, deque
 
-# defaultdict：キーがない場合もエラーにならない
 user_groups = defaultdict(list)
 user_groups['admin'].append('Alice')
 
-# Counter：要素の出現回数を数える
-word_counts = Counter(['apple', 'banana', 'apple', 'orange'])
+word_counts = Counter(['apple', 'banana', 'apple'])
 
-# deque：両端での高速な追加・削除
 queue = deque([1, 2, 3])
-queue.append(4)  # 右端に追加
-queue.appendleft(0)  # 左端に追加
+queue.append(4)
 ```
 
-## クラスとオブジェクト指向
+## Classes and Object-Oriented Programming
 
-### クラス属性とインスタンス属性
+### Class Attributes and Instance Attributes
 
-```python
-class MyClass:
-    """サンプルクラス。"""
-    
-    class_variable = 0  # クラス属性（全インスタンスで共有）
-    
-    def __init__(self, value):
-        self.instance_variable = value  # インスタンス属性（各インスタンス固有）
-        MyClass.class_variable += 1  # クラス属性の更新は明示的に
-```
+- Update class attributes explicitly with `ClassName.attribute`
+- Define instance attributes within `__init__` as `self.attribute`
 
-### プロパティの使用
+### Using Properties
 
-属性へのアクセスを制御する場合は、`@property`デコレータを使用する：
+- Use the `@property` decorator to control attribute access
 
 ```python
 class User:
-    """ユーザークラス。"""
-    
+    """User class."""
+
     def __init__(self, name: str, age: int):
         self._name = name
         self._age = age
-    
+
     @property
     def name(self) -> str:
-        """ユーザー名を取得。"""
+        """Get user name."""
         return self._name
-    
+
     @property
     def age(self) -> int:
-        """年齢を取得。"""
+        """Get age."""
         return self._age
-    
+
     @age.setter
     def age(self, value: int) -> None:
-        """年齢を設定（検証付き）。"""
+        """Set age (with validation)."""
         if value < 0:
-            raise ValueError("年齢は0以上である必要があります")
+            raise ValueError("Age must be 0 or greater")
         self._age = value
 ```
 
-### 継承とインスタンスチェック
+### Inheritance and Instance Checking
+
+- Use `isinstance()` for type checking
+- Use `issubclass()` for subclass checking
+
+## Performance and Optimization
+
+### General Principles
+
+- Prioritize algorithm optimization
+- Choose appropriate data structures (utilize the `collections` module)
+- Leverage built-in functions (fast C implementations)
+- Identify bottlenecks through profiling (`cProfile`, `timeit`)
+- Avoid excessive abstraction
 
 ```python
-# インスタンスチェック
-if isinstance(obj, MyClass):
-    process(obj)
-
-# 複数のクラスをチェック
-if isinstance(obj, (str, bytes)):
-    handle_text(obj)
-
-# サブクラスチェック
-if issubclass(MyClass, BaseClass):
-    do_something()
-```
-
-## パフォーマンスと最適化
-
-### 一般原則
-
-1. **アルゴリズムの最適化を優先**する（マイクロ最適化よりも重要）
-2. **適切なデータ構造**を選択する（`collections`モジュールを活用）
-3. **組み込み関数**を活用する（C実装で高速）
-4. **プロファイリング**してボトルネックを特定する（`cProfile`, `timeit`）
-5. **過度な抽象化**を避ける
-
-```python
-# 良い例：組み込み関数を使用
-numbers = [1, 2, 3, 4, 5]
+# Recommended
 total = sum(numbers)
-maximum = max(numbers)
-
-# 良い例：リスト内包表記（高速）
 squares = [x**2 for x in range(1000)]
-
-# 悪い例：不要なループ
-squares = []
-for x in range(1000):
-    squares.append(x**2)
 ```
 
-### 計測とプロファイリング
+### Measurement and Profiling
 
-```python
-import timeit
-import cProfile
+- Use `timeit` for execution time measurement
+- Use `cProfile` for bottleneck identification
 
-# 実行時間の計測
-execution_time = timeit.timeit('sum(range(100))', number=10000)
+## Logging
 
-# プロファイリング
-cProfile.run('my_function()')
-```
-
-## ロギング
-
-`print()`の代わりに**loggingモジュール**を使用する：
+- Use the `logging` module instead of `print()`
 
 ```python
 import logging
 
-# ロガーの設定
+# Logger configuration
 logger = logging.getLogger(__name__)
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 
-# ログの記録
-logger.debug('デバッグ情報')
-logger.info('処理を開始します')
-logger.warning('警告：設定が見つかりません')
-logger.error('エラーが発生しました')
-logger.critical('重大なエラー')
+# Recording logs
+logger.debug('Debug information')
+logger.info('Starting process')
+logger.warning('Warning: Configuration not found')
+logger.error('An error occurred')
+logger.critical('Critical error')
 ```
 
-### ログレベルの使い分け
+### Log Level Usage
 
-| レベル | 用途 |
-|--------|------|
-| DEBUG | 詳細な診断情報（開発時） |
-| INFO | 一般的な情報メッセージ |
-| WARNING | 警告（動作するが注意が必要） |
-| ERROR | エラー（一部機能が動作しない） |
-| CRITICAL | 重大なエラー（プログラム継続困難） |
+| Level | Usage |
+|-------|-------|
+| DEBUG | Detailed diagnostic information (during development) |
+| INFO | General informational messages |
+| WARNING | Warning messages (works but requires attention) |
+| ERROR | Error messages (some functionality does not work) |
+| CRITICAL | Critical errors (program continuation difficult) |
 
-## セキュリティ
+## Security
 
-### 入力の検証
+### Input Validation
+
+- Do not use `eval()` (security risk)
+- Use `ast.literal_eval()` for literal evaluation
 
 ```python
-# 悪い例：eval()の使用（危険）
-user_input = "os.system('rm -rf /')"
-eval(user_input)  # 絶対に使用しない
-
-# 良い例：型変換を使用
-user_input = "42"
-value = int(user_input)
-
-# 良い例：安全な評価
+# Recommended
 import ast
 user_input = "[1, 2, 3]"
 safe_value = ast.literal_eval(user_input)
 ```
 
-### 機密情報の管理
+### Managing Sensitive Information
 
-```python
-import secrets
-import hashlib
+- Use the `secrets` module for random number generation
+- Use `hashlib.pbkdf2_hmac` for password hashing
 
-# 安全な乱数生成
-token = secrets.token_hex(16)
+### Safe File Path Handling
 
-# セキュアなハッシュ
-password = "user_password"
-salt = secrets.token_bytes(32)
-hashed = hashlib.pbkdf2_hmac('sha256', password.encode(), salt, 100000)
-```
+- Use `pathlib` to construct paths
+- Prevent path traversal with `Path.is_relative_to()`
 
-### ファイルパスの安全な処理
+## Code Quality Tools
 
-```python
-from pathlib import Path
+### Recommended Tools
 
-# 良い例：pathlibを使用
-base_dir = Path('/safe/directory')
-user_file = base_dir / 'user_input.txt'  # パストラバーサル対策
+- Black: Automatic code formatting
+- isort: Automatic import organization
+- flake8: PEP 8 compliance checking
+- mypy: Static type checking
 
-# パスの検証
-if user_file.resolve().is_relative_to(base_dir):
-    process_file(user_file)
-```
+### Pre-commit Hook Configuration
 
-## コード品質ツール
+- Configure Black, isort, and flake8 in `.pre-commit-config.yaml`
 
-### 推奨ツール
+## Checklist
 
-プロジェクトに以下のツールを導入する：
+### Style and Formatting
+- [ ] Use 4-space indentation
+- [ ] Limit line length to 79 characters
+- [ ] Follow naming conventions
+- [ ] Correct import order
+- [ ] No wildcard imports
 
-```bash
-# フォーマッター
-black .  # コードを自動フォーマット
-isort .  # インポートを自動整理
+### Documentation
+- [ ] Docstrings for public functions, methods, and classes
+- [ ] Args, Returns, and Raises described in docstrings
+- [ ] Type hints used
 
-# リンター
-flake8 .  # PEP 8準拠チェック
-pylint mymodule.py  # コード品質チェック
+### Error Handling
+- [ ] Specific exception handling
+- [ ] Resource management with with statements
+- [ ] Proper exception handling and re-raising
 
-# 型チェック
-mypy mymodule.py  # 静的型チェック
-```
+### Code Quality
+- [ ] No mutable objects in default arguments
+- [ ] Use logging module
+- [ ] No `eval()` usage
+- [ ] Appropriate data structure selection
 
-### pre-commitフックの設定
-
-`.pre-commit-config.yaml`を設定して自動チェックを有効化：
-
-```yaml
-repos:
-  - repo: https://github.com/psf/black
-    rev: 23.3.0
-    hooks:
-      - id: black
-  
-  - repo: https://github.com/pycqa/isort
-    rev: 5.12.0
-    hooks:
-      - id: isort
-  
-  - repo: https://github.com/pycqa/flake8
-    rev: 6.0.0
-    hooks:
-      - id: flake8
-```
-
-## チェックリスト
-
-コード作成時に以下を確認する：
-
-### スタイルとフォーマット
-- [ ] 4スペースインデントを使用している
-- [ ] 行の長さが79文字以内である
-- [ ] 命名規則に従っている（クラス名、関数名、変数名）
-- [ ] インポートが正しい順序で記述されている
-- [ ] `from module import *` を使用していない
-
-### ドキュメンテーション
-- [ ] すべての公開関数・メソッド・クラスにdocstringがある
-- [ ] docstringに引数、戻り値、例外が記述されている
-- [ ] 型ヒントを使用している
-
-### エラー処理
-- [ ] 具体的な例外を処理している
-- [ ] リソース管理にwith文を使用している
-- [ ] 例外を適切に処理または再発生させている
-
-### コード品質
-- [ ] デフォルト引数にミュータブルなオブジェクトを使用していない
-- [ ] ロギングにloggingモジュールを使用している
-- [ ] `eval()`などの危険な関数を使用していない
-- [ ] 適切なデータ構造を選択している
-
-### テスト
-- [ ] ユニットテストを作成している
-- [ ] 境界条件をテストしている
-- [ ] 例外処理をテストしている
-
-### パフォーマンス
-- [ ] 適切なアルゴリズムとデータ構造を選択している
-- [ ] 不要なループや処理を避けている
-- [ ] 組み込み関数を活用している
-
-## 参考リソース
+## Reference Resources
 
 - [PEP 8 -- Style Guide for Python Code](https://peps.python.org/pep-0008/)
-- [Python公式ドキュメント](https://docs.python.org/ja/3/)
+- [Python Official Documentation](https://docs.python.org/ja/3/)
 - [The Zen of Python (PEP 20)](https://peps.python.org/pep-0020/)
 - [Type Hints (PEP 484)](https://peps.python.org/pep-0484/)

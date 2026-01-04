@@ -1,32 +1,33 @@
+```instructions
 ---
-description: 'Cloud Functions (2nd gen) HTTP endpoint implementation best practices'
+description: 'Cloud Functions (2nd gen) HTTPエンドポイント実装のベストプラクティス'
 applyTo: '**/*.js, **/*.ts, **/main.py'
 ---
 
-# Cloud Functions HTTP Endpoint Best Practices
+# Cloud Functions HTTPエンドポイント ベストプラクティス
 
-## Purpose and Scope
+## 目的とスコープ
 
-Apply best practices for Cloud Functions (2nd gen) HTTP endpoint implementation.
-Target runtime: Node.js 20+, Python 3.11+.
+Cloud Functions (2nd gen) HTTPエンドポイント実装のベストプラクティスを適用する。
+対象ランタイム: Node.js 20+, Python 3.11+。
 
-## Priorities
+## 優先事項
 
-1. Always send HTTP response in all code paths (critical)
-2. Implement idempotency for all operations
-3. Complete async operations before sending response
-4. Security: authenticate, validate inputs, use Secret Manager
-5. Performance: reuse connections globally, minimize dependencies
-6. Logging: use structured JSON logs with trace context
+1. 常にすべてのコードパスでHTTPレスポンスを送信する（最重要）
+2. すべての操作に冪等性を実装する
+3. レスポンス送信前に非同期操作を完了させる
+4. セキュリティ: 認証、入力検証、Secret Managerの使用
+5. パフォーマンス: 接続のグローバル再利用、依存関係の最小化
+6. ログ: トレースコンテキスト付き構造化JSONログの使用
 
-## Core Requirements
+## コア要件
 
-### Always Send HTTP Response
+### 常にHTTPレスポンスを送信
 
-Send HTTP response in all code paths.
+すべてのコードパスでHTTPレスポンスを送信する。
 
 ```javascript
-// Good: All paths return response
+// Good: すべてのパスでレスポンスを返す
 functions.http('myFunction', (req, res) => {
   if (req.method !== 'POST') {
     return res.status(405).send('Method Not Allowed');
@@ -41,21 +42,21 @@ functions.http('myFunction', (req, res) => {
   }
 });
 
-// Bad: Missing response causes timeout and full billing
+// Bad: レスポンス未送信はタイムアウトと課金の原因となる
 functions.http('badFunction', (req, res) => {
   console.log('Processing...');
-  // No res.send() - runs until timeout
+  // res.send()がない - タイムアウトまで実行される
 });
 ```
 
-**Why**: Missing response causes timeout billing and unpredictable behavior.
+**理由**: レスポンス未送信はタイムアウト課金と予測不能な動作を引き起こす。
 
-### Implement Idempotency
+### 冪等性の実装
 
-Ensure functions produce same result when called multiple times.
+関数が複数回呼び出されても同じ結果を生成することを保証する。
 
 ```javascript
-// Good: Check existing before creating
+// Good: 作成前に既存をチェック
 functions.http('createUser', async (req, res) => {
   const userId = req.body.userId;
   
@@ -72,21 +73,21 @@ functions.http('createUser', async (req, res) => {
   res.status(201).json(user);
 });
 
-// Bad: Creates duplicate on retry
+// Bad: リトライ時に重複を作成
 functions.http('badCreateUser', async (req, res) => {
   const user = await db.createUser(req.body.userId, req.body);
   res.status(201).json(user);
 });
 ```
 
-**Why**: Enables safe retry on failures and handles duplicate events.
+**理由**: 失敗時の安全なリトライを可能にし、重複イベントを処理する。
 
-### Complete Async Operations Before Response
+### レスポンス前に非同期操作を完了
 
-Await all async operations before sending HTTP response.
+HTTPレスポンス送信前にすべての非同期操作を待機する。
 
 ```javascript
-// Good: Await all operations
+// Good: すべての操作を待機
 functions.http('processData', async (req, res) => {
   try {
     await saveToDatabase(req.body);
@@ -98,23 +99,23 @@ functions.http('processData', async (req, res) => {
   }
 });
 
-// Bad: Response before operations complete
+// Bad: 操作完了前にレスポンス
 functions.http('badProcessData', (req, res) => {
-  saveToDatabase(req.body); // No await
+  saveToDatabase(req.body); // awaitなし
   res.status(200).send('Processing started');
 });
 ```
 
-## HTTP Endpoint Design
+## HTTPエンドポイント設計
 
-### Use Functions Framework Standard Pattern
+### Functions Framework標準パターンの使用
 
 ```javascript
 // Node.js
 import { http } from '@google-cloud/functions-framework';
 
 http('myHttpFunction', (req, res) => {
-  // Process request
+  // リクエストを処理
   res.send('OK');
 });
 ```
@@ -128,9 +129,9 @@ def my_http_function(request):
     return 'OK', 200
 ```
 
-### ✅ Proper HTTP Method Handling
+### ✅ 適切なHTTPメソッド処理
 
-**Required**: Inspect HTTP methods and handle them appropriately
+**必須**: HTTPメソッドを検査し、適切に処理する
 
 ```javascript
 // ✅ Good example
@@ -138,7 +139,7 @@ functions.http('apiEndpoint', (req, res) => {
   res.set('Access-Control-Allow-Origin', '*');
   
   if (req.method === 'OPTIONS') {
-    // CORS preflight request
+    // CORSプリフライトリクエスト
     res.set('Access-Control-Allow-Methods', 'GET, POST');
     res.set('Access-Control-Allow-Headers', 'Content-Type');
     res.set('Access-Control-Max-Age', '3600');
@@ -156,12 +157,12 @@ functions.http('apiEndpoint', (req, res) => {
 });
 ```
 
-### ✅ Proper CORS Configuration
+### ✅ 適切なCORS設定
 
-**Required**: Configure CORS headers appropriately
+**必須**: CORSヘッダーを適切に設定する
 
 ```javascript
-// ✅ Good example: Production - Allow specific origins only
+// ✅ Good example: 本番環境 - 特定のオリジンのみ許可
 functions.http('secureApi', (req, res) => {
   const allowedOrigins = [
     'https://example.com',
@@ -180,24 +181,24 @@ functions.http('secureApi', (req, res) => {
     return res.status(204).send('');
   }
   
-  // Main logic
+  // メインロジック
   res.json({ message: 'Success' });
 });
 
-// ❌ Bad example: Allow all origins (use only for development)
+// ❌ Bad example: すべてのオリジンを許可（開発環境のみで使用）
 functions.http('insecureApi', (req, res) => {
-  res.set('Access-Control-Allow-Origin', '*'); // Avoid in production
+  res.set('Access-Control-Allow-Origin', '*'); // 本番環境では避ける
   res.json({ message: 'Success' });
 });
 ```
 
 ---
 
-## Security Implementation
+## セキュリティ実装
 
-### Implement Authentication
+### 認証の実装
 
-Verify ID tokens for protected endpoints.
+保護されたエンドポイントに対してIDトークンを検証する。
 
 ```javascript
 const { OAuth2Client } = require('google-auth-library');
@@ -226,16 +227,16 @@ functions.http('authenticatedEndpoint', async (req, res) => {
 });
 ```
 
-Set IAM with least privilege:
+最小権限でIAMを設定する:
 ```bash
 gcloud run services add-iam-policy-binding SERVICE_NAME \
   --member='serviceAccount:caller@project.iam.gserviceaccount.com' \
   --role='roles/run.invoker'
 ```
 
-### Validate All User Input
+### すべてのユーザー入力を検証
 
-Validate type, length, format and escape HTML.
+型、長さ、形式を検証し、HTMLをエスケープする。
 
 ```javascript
 const escapeHtml = require('escape-html');
@@ -256,15 +257,15 @@ functions.http('userInput', (req, res) => {
   res.send(`Hello ${safeName}!`);
 });
 
-// Bad: No validation causes XSS
+// Bad: 検証なしはXSSの原因となる
 functions.http('unsafeInput', (req, res) => {
   res.send(`Hello ${req.body.name}!`);
 });
 ```
 
-### Use Secret Manager for Secrets
+### シークレットにはSecret Managerを使用
 
-Never hardcode or use environment variables for secrets.
+シークレットをハードコードまたは環境変数で管理しない。
 
 ```javascript
 const { SecretManagerServiceClient } = require('@google-cloud/secret-manager');
@@ -282,37 +283,37 @@ functions.http('secureFunction', async (req, res) => {
   res.send('OK');
 });
 
-// Bad: Hardcoded or env vars expose secrets
-const API_KEY = 'hardcoded-secret-key'; // Never do this
-const API_KEY = process.env.API_KEY; // Stored as plaintext
+// Bad: ハードコードや環境変数はシークレットを露出させる
+const API_KEY = 'hardcoded-secret-key'; // 絶対にしない
+const API_KEY = process.env.API_KEY; // プレーンテキストで保存される
 ```
 
-## Performance Optimization
+## パフォーマンス最適化
 
-### Initialize Reusable Objects Globally
+### 再利用可能なオブジェクトをグローバルに初期化
 
-Initialize DB clients and connections once in global scope.
+DBクライアントと接続をグローバルスコープで一度だけ初期化する。
 
 ```javascript
 const { Firestore } = require('@google-cloud/firestore');
-const db = new Firestore(); // Initialize once
+const db = new Firestore(); // 一度だけ初期化
 
 functions.http('optimizedFunction', async (req, res) => {
   const doc = await db.collection('users').doc(req.body.userId).get();
   res.json(doc.data());
 });
 
-// Bad: Reinitialize every request
+// Bad: リクエストごとに再初期化
 functions.http('slowFunction', async (req, res) => {
-  const db = new Firestore(); // Slow
+  const db = new Firestore(); // 遅い
   const doc = await db.collection('users').doc(req.body.userId).get();
   res.json(doc.data());
 });
 ```
 
-**Why**: Reuses connections across requests, avoiding cold start overhead.
+**理由**: リクエスト間で接続を再利用し、コールドスタートのオーバーヘッドを回避する。
 
-### Use Lazy Initialization When Needed
+### 必要に応じて遅延初期化を使用
 
 ```javascript
 let dbConnection = null;
@@ -325,22 +326,22 @@ async function getDbConnection() {
 }
 ```
 
-### Minimize Dependencies
+### 依存関係を最小化
 
-Import only required modules to reduce cold start time.
+コールドスタート時間を短縮するため、必要なモジュールのみをインポートする。
 
 ```javascript
-// Good: Only required imports
+// Good: 必要なインポートのみ
 const { Firestore } = require('@google-cloud/firestore');
 
-// Bad: Unused imports slow startup
+// Bad: 未使用のインポートは起動を遅くする
 const _ = require('lodash');
 const moment = require('moment');
 ```
 
-### Clean Up Temporary Files
+### 一時ファイルをクリーンアップ
 
-Delete temp files in finally block to prevent disk leaks.
+finallyブロックで一時ファイルを削除し、ディスクリークを防ぐ。
 
 ```javascript
 const fs = require('fs').promises;
@@ -364,11 +365,11 @@ functions.http('fileProcessing', async (req, res) => {
 });
 ```
 
-## Error Handling
+## エラーハンドリング
 
-### Catch All Exceptions
+### すべての例外をキャッチ
 
-Use try-catch to handle errors and return appropriate HTTP status.
+try-catchを使用してエラーを処理し、適切なHTTPステータスを返す。
 
 ```javascript
 functions.http('robustFunction', async (req, res) => {
@@ -393,7 +394,7 @@ functions.http('robustFunction', async (req, res) => {
 });
 ```
 
-### Define Custom Error Classes
+### カスタムエラークラスを定義
 
 ```javascript
 class ValidationError extends Error {
@@ -432,11 +433,11 @@ functions.http('typedErrors', async (req, res) => {
 });
 ```
 
-## Logging
+## ログ
 
-### Use Structured JSON Logs
+### 構造化JSONログを使用
 
-Log JSON with severity and trace context.
+重要度とトレースコンテキストを含むJSONをログに記録する。
 
 ```javascript
 functions.http('structuredLogging', (req, res) => {
@@ -455,9 +456,9 @@ functions.http('structuredLogging', (req, res) => {
 });
 ```
 
-### Use Severity Levels
+### 重要度レベルを使用
 
-Use INFO, WARNING, ERROR with console.log/warn/error.
+console.log/warn/errorでINFO、WARNING、ERRORを使用する。
 
 ```javascript
 function logError(message, error, data = {}) {
@@ -471,9 +472,9 @@ function logError(message, error, data = {}) {
 }
 ```
 
-## Development and Testing
+## 開発とテスト
 
-### Test Locally with Functions Framework
+### Functions Frameworkでローカルテスト
 
 ```bash
 npm install @google-cloud/functions-framework
@@ -490,7 +491,7 @@ npm start
 curl http://localhost:8080 -d '{"userId": "123"}' -H "Content-Type: application/json"
 ```
 
-### Write Unit Tests
+### ユニットテストを書く
 
 ```javascript
 const { myHttpFunction } = require('./myFunction');
@@ -519,9 +520,9 @@ describe('myHttpFunction', () => {
 });
 ```
 
-## Deployment
+## デプロイ
 
-### Deploy with Proper Resource Settings
+### 適切なリソース設定でデプロイ
 
 ```bash
 gcloud functions deploy myHttpFunction \
@@ -539,7 +540,7 @@ gcloud functions deploy myHttpFunction \
   --set-env-vars PROJECT_ID=my-project \
   --set-secrets API_KEY=api-key:latest
 
-# Secure endpoint (requires auth)
+# セキュアなエンドポイント（認証必須）
 gcloud functions deploy secureFunction \
   --gen2 \
   --runtime=nodejs20 \
@@ -547,53 +548,53 @@ gcloud functions deploy secureFunction \
   --no-allow-unauthenticated
 ```
 
-## Checklist
+## チェックリスト
 
-### Core
-- [ ] Send HTTP response in all code paths
-- [ ] Implement idempotency
-- [ ] Complete async operations before response
-- [ ] Catch all exceptions with try-catch
+### コア
+- [ ] すべてのコードパスでHTTPレスポンスを送信
+- [ ] 冪等性を実装
+- [ ] レスポンス前に非同期操作を完了
+- [ ] try-catchですべての例外をキャッチ
 
-### Security
-- [ ] Implement authentication for protected endpoints
-- [ ] Validate all user inputs
-- [ ] Escape HTML output
-- [ ] Use Secret Manager for secrets
-- [ ] Configure CORS properly
-- [ ] Set IAM with least privilege
+### セキュリティ
+- [ ] 保護されたエンドポイントに認証を実装
+- [ ] すべてのユーザー入力を検証
+- [ ] HTML出力をエスケープ
+- [ ] シークレットにSecret Managerを使用
+- [ ] CORSを適切に設定
+- [ ] 最小権限でIAMを設定
 
-### Performance
-- [ ] Initialize DB clients globally
-- [ ] Remove unused dependencies
-- [ ] Clean up temporary files
-- [ ] Set min-instances to reduce cold starts
+### パフォーマンス
+- [ ] DBクライアントをグローバルに初期化
+- [ ] 未使用の依存関係を削除
+- [ ] 一時ファイルをクリーンアップ
+- [ ] コールドスタート削減のためmin-instancesを設定
 
-### Logging
-- [ ] Use structured JSON logs
-- [ ] Specify severity levels (INFO, WARNING, ERROR)
-- [ ] Associate trace context
+### ログ
+- [ ] 構造化JSONログを使用
+- [ ] 重要度レベルを指定（INFO、WARNING、ERROR）
+- [ ] トレースコンテキストを関連付け
 
-### Testing
-- [ ] Write unit tests
-- [ ] Test locally with Functions Framework
-- [ ] Configure appropriate resources for deployment
+### テスト
+- [ ] ユニットテストを書く
+- [ ] Functions Frameworkでローカルテスト
+- [ ] デプロイに適切なリソースを設定
 
-## Common Mistakes
+## よくある間違い
 
-### Missing Response
+### レスポンスの未送信
 ```javascript
-// Bad: No response sent
+// Bad: レスポンスが送信されない
 if (req.method !== 'POST') return;
 
 // Good
 if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
 ```
 
-### Async Without Await
+### awaitなしの非同期処理
 ```javascript
 // Bad
-saveToDatabase(req.body); // No await
+saveToDatabase(req.body); // awaitなし
 res.send('OK');
 
 // Good
@@ -601,17 +602,19 @@ await saveToDatabase(req.body);
 res.send('OK');
 ```
 
-### Reinitializing Connections
+### 接続の再初期化
 ```javascript
-// Bad: Reinitialize every request
+// Bad: リクエストごとに再初期化
 const db = new Firestore();
 
-// Good: Initialize once globally
-const db = new Firestore(); // Outside function
+// Good: 一度だけグローバルに初期化
+const db = new Firestore(); // 関数外
 ```
 
-## References
+## 参考資料
 
-- [Cloud Run Documentation](https://cloud.google.com/run/docs)
+- [Cloud Runドキュメント](https://cloud.google.com/run/docs)
 - [Functions Framework](https://github.com/GoogleCloudPlatform/functions-framework)
-- [Cloud Run Best Practices](https://cloud.google.com/run/docs/tips/general)
+- [Cloud Runベストプラクティス](https://cloud.google.com/run/docs/tips/general)
+
+```

@@ -1,27 +1,33 @@
 ---
-description: 'TypeScript で安全・保守性の高いコードを書くためのベストプラクティス規則'
+description: 'Best practice rules for writing safe and maintainable TypeScript code'
 applyTo: '**/*.ts, **/*.tsx'
 ---
 
-# TypeScript ベストプラクティス
+# TypeScript Best Practices
 
-GitHub Copilot が TypeScript コードを生成・修正する際に従うべきガイドラインです。型安全性、保守性、変更容易性を優先してください。
+## Purpose and Scope
 
-## 基本方針
+Guidelines for ensuring type safety, maintainability, and changeability when generating or modifying TypeScript code
 
-- 公開API（外部に見える関数・クラス・型）では、型を明確にする
-- 実装詳細は型として公開しない（利用者が依存しない設計にする）
-- 型推論を活かし、局所変数の冗長な型注釈は避ける
-- 型の複雑さより可読性を優先する（読み手が追える型設計にする）
+## Core Principles
 
-## `any` を避ける
+- Explicitly specify types for public APIs (exported functions, classes, and types)
+- Do not expose implementation details as types
+- Leverage type inference and avoid redundant type annotations on local variables
+- Prioritize readability over type complexity
 
-- `any` は原則使わない
-- 不確かな値（外部入力、JSON、環境変数など）はまず `unknown` として受け、型ガードやナローイングで安全に扱う
+## Type Safety
 
-### Good Example
+### Avoid `any`
+
+- Do not use `any`
+- Treat uncertain values (external input, JSON, environment variables) as `unknown`
+- Handle them safely using type guards or narrowing
+
+**Rationale**: `any` disables type checking and increases the risk of runtime errors
 
 ```ts
+// Recommended
 function parseJson(text: string): unknown {
   return JSON.parse(text)
 }
@@ -36,20 +42,22 @@ if (isRecord(value) && typeof value.x === 'number') {
 }
 ```
 
-### Bad Example
-
 ```ts
+// Not Recommended
 function parseJson(text: string): any {
   return JSON.parse(text)
 }
 ```
 
-## ユニオン型とナローイングを基本にする
+### Use Union Types and Narrowing as Default
 
-- 条件分岐のあるデータは判別可能ユニオン（discriminated union）を優先する
-- `switch` と `never` を使って分岐の網羅性チェックを行う
+- Use discriminated unions for data with conditional branches
+- Check exhaustiveness of branches using `switch` and `never`
+
+**Rationale**: The compiler detects unhandled cases and prevents gaps during refactoring
 
 ```ts
+// Recommended
 type Result =
   | { kind: 'ok'; value: string }
   | { kind: 'err'; message: string }
@@ -68,35 +76,43 @@ export function unwrap(result: Result): string {
 }
 ```
 
-## ジェネリクスは最小限にする
+### Minimize Generics
 
-- 型パラメータは増やしすぎない
-- ユニオンや具体型で表現できるなら、ジェネリクスを導入しない
-- 必要な場合は `extends` による制約を付ける
+- Do not add too many type parameters
+- If a union or concrete type can represent it, do not introduce generics
+- When necessary, add constraints using `extends`
+
+**Rationale**: Excessive generics increase the cost of understanding and maintenance
 
 ```ts
+// Recommended
 export function getProperty<T extends object, K extends keyof T>(obj: T, key: K): T[K] {
   return obj[key]
 }
 ```
 
-## Utility Types を優先する
+### Prefer Utility Types
 
-- `Partial` / `Required` / `Readonly` / `Pick` / `Omit` / `Record` など標準ユーティリティ型を優先する
-- 「全部 `Partial`」にせず、用途（作成、更新、保存）に合わせて型を分ける
+- Use standard utility types (`Partial` / `Required` / `Readonly` / `Pick` / `Omit` / `Record`)
+- Separate types for different purposes (create, update, save); do not make the entire type `Partial`
+
+**Rationale**: Standard types are widely recognized and convey intent clearly
 
 ```ts
+// Recommended
 type User = { id: string; name: string; email: string }
-
 type UserPatch = Partial<Pick<User, 'name' | 'email'>>
 ```
 
-## モジュール境界と `import type`
+### Module Boundaries and `import type`
 
-- 型だけを参照する import は `import type` を使う
-- ランタイム依存を増やさない（循環依存を起こしにくくする）
+- Use `import type` for type-only imports
+- Do not increase runtime dependencies
+
+**Rationale**: Prevents circular dependencies and reduces bundle size
 
 ```ts
+// Recommended
 import type { User } from './types'
 
 export function greet(user: User): string {
@@ -104,36 +120,274 @@ export function greet(user: User): string {
 }
 ```
 
-## 型アサーション（`as`）と non-null アサーション（`!`）を濫用しない
+### Leverage Type Guards
 
-- `as` は最後の手段として扱い、可能な限り型ガードで置き換える
-- `x!` は `undefined` を握りつぶすため、外部入力・環境変数・I/O では特に避ける
+- Use custom type guards (`is`) to explicitly narrow types
+- Prefer built-in guards like `Array.isArray()` or `typeof`
 
-## `tsconfig`（型チェックの品質）
+**Rationale**: Maintains type safety while clarifying conditional branches
 
-- `strict: true` を前提に設計する（必要なら段階的に移行する）
-- `useUnknownInCatchVariables: true` を検討し、例外処理を安全側に寄せる
-- `noUncheckedIndexedAccess: true` を検討し、インデックスアクセスの取りこぼしを減らす
-- `noUnusedLocals` / `noUnusedParameters` を有効化し、不要コードを早めに除去する
+```ts
+// Recommended
+function isString(value: unknown): value is string {
+  return typeof value === 'string'
+}
 
-## ESLint / typescript-eslint（一般知見）
+function processInput(input: unknown): string {
+  if (isString(input)) {
+    return input.trim()
+  }
+  throw new Error('Expected string')
+}
+```
 
-- `tsc` だけでは拾いにくい問題を ESLint で補う
-- `typescript-eslint` の共有設定をベースにする
-  - 型情報なし: `recommended` / `stylistic`
-  - 型情報あり: `recommended-type-checked` / `stylistic-type-checked`
+```ts
+// Not Recommended
+function processInput(input: unknown): string {
+  return (input as string).trim()
+}
+```
 
-注意:
-- `@typescript-eslint/consistent-type-imports` と TypeScript の `verbatimModuleSyntax` は競合しうるため、原則どちらか片方に寄せる
-- 旧デコレータ（`experimentalDecorators` と `emitDecoratorMetadata`）利用時は `consistent-type-imports` の注意事項を確認する
+### Do Not Overuse Type Assertions (`as`) and Non-null Assertions (`!`)
 
-## 検証（推奨）
+- Treat `as` as a last resort
+- Replace with type guards whenever possible
+- Avoid `x!` for external input, environment variables, or I/O
 
-- 型チェック: `tsc --noEmit`
-- 設定確認: `tsc --showConfig`
-- （導入している場合）Lint: `eslint .`
+**Rationale**: Assertions bypass type checking and cause runtime errors
 
-## 参考
+```ts
+// Recommended
+function processValue(value: unknown): string {
+  if (typeof value === 'string') {
+    return value.toUpperCase()
+  }
+  throw new Error('Expected string')
+}
+
+// Not Recommended
+function processValue(value: unknown): string {
+  return (value as string).toUpperCase()
+}
+```
+
+## TypeScript Configuration
+
+### Recommended `tsconfig.json` Settings
+
+- Enable `strict: true` (gradual migration is acceptable)
+- Use `useUnknownInCatchVariables: true` to keep exception handling safe
+- Use `noUncheckedIndexedAccess: true` to prevent missed index accesses
+- Use `noUnusedLocals` / `noUnusedParameters` to remove unnecessary code early
+
+**Rationale**: Strict type checking detects bugs early and reduces maintenance costs
+
+```json
+{
+  "compilerOptions": {
+    "strict": true,
+    "useUnknownInCatchVariables": true,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
+  }
+}
+```
+
+### ESLint / typescript-eslint
+
+- Complement issues that `tsc` cannot catch with ESLint
+- Base on `typescript-eslint` shared configs
+  - Without type information: `recommended` / `stylistic`
+  - With type information: `recommended-type-checked` / `stylistic-type-checked`
+
+**Cautions**:
+- `@typescript-eslint/consistent-type-imports` and TypeScript's `verbatimModuleSyntax` may conflict, so standardize on one
+- When using legacy decorators (`experimentalDecorators` and `emitDecoratorMetadata`), check the caveats for `consistent-type-imports`
+
+## Validation Commands
+
+### Type Checking
+
+```bash
+tsc --noEmit
+```
+
+### Configuration Check
+
+```bash
+tsc --showConfig
+```
+
+### Lint (if integrated)
+
+```bash
+eslint .
+```
+
+## Error Handling
+
+### Type-Safe Exception Handling
+
+- Handle `unknown` type in `catch` clauses (`useUnknownInCatchVariables: true`)
+- Determine error type before processing
+
+**Rationale**: JavaScript allows throwing any value, so handle without assuming types
+
+```ts
+// Recommended
+try {
+  await fetchData()
+} catch (error: unknown) {
+  if (error instanceof Error) {
+    console.error(error.message)
+  } else {
+    console.error('Unknown error occurred')
+  }
+}
+```
+
+```ts
+// Not Recommended
+try {
+  await fetchData()
+} catch (error) {
+  console.error(error.message) // error is 'any'
+}
+```
+
+### Leverage Result Type Pattern
+
+- Express success and failure using Result type instead of exceptions
+- Force explicit error handling on the caller side
+
+**Rationale**: Detects missing error handling at compile time
+
+```ts
+// Recommended
+type Result<T, E> =
+  | { success: true; value: T }
+  | { success: false; error: E }
+
+function divide(a: number, b: number): Result<number, string> {
+  if (b === 0) {
+    return { success: false, error: 'Division by zero' }
+  }
+  return { success: true, value: a / b }
+}
+
+const result = divide(10, 2)
+if (result.success) {
+  console.log(result.value)
+} else {
+  console.error(result.error)
+}
+```
+
+## Naming Conventions
+
+### General Naming Patterns
+
+- Variables and functions: `camelCase`
+- Types, interfaces, and classes: `PascalCase`
+- Constants: `UPPER_SNAKE_CASE` or `camelCase`
+- Private properties: `#privateField` or `_privateField`
+
+**Rationale**: Consistent naming conventions improve code readability
+
+```ts
+// Recommended
+const MAX_RETRY_COUNT = 3
+type UserProfile = { id: string; name: string }
+
+class DatabaseConnection {
+  #connectionString: string
+  
+  constructor(connectionString: string) {
+    this.#connectionString = connectionString
+  }
+}
+
+function fetchUserData(userId: string): Promise<UserProfile> {
+  // ...
+}
+```
+
+### Type Name Prefixes and Suffixes
+
+- Do not prefix interfaces with `I` (`IUser` → `User`)
+- Type names should be concrete and descriptive
+- Add `Props` suffix to Props types (for React)
+
+```ts
+// Recommended
+interface User {
+  id: string
+  name: string
+}
+
+type ButtonProps = {
+  label: string
+  onClick: () => void
+}
+```
+
+```ts
+// Not Recommended
+interface IUser {
+  id: string
+  name: string
+}
+```
+
+## Performance Optimization
+
+### Type Computation Performance
+
+- Avoid overly complex type definitions
+- Minimize use of `infer` and recursive types
+- Replace with concrete types when type computation cost is high
+
+**Rationale**: Complex types increase compilation time
+
+```ts
+// Recommended: Simple type definition
+type ApiResponse = {
+  data: unknown
+  status: number
+  headers: Record<string, string>
+}
+
+// Not Recommended: Overly complex type
+type DeepPartial<T> = T extends object
+  ? { [P in keyof T]?: DeepPartial<T[P]> }
+  : T
+```
+
+### Leverage `const` Assertions
+
+- Use `as const` to preserve literal types
+- Express immutability of objects and arrays
+
+**Rationale**: Provides more specific type inference and prevents unintended changes
+
+```ts
+// Recommended
+const COLORS = ['red', 'green', 'blue'] as const
+type Color = typeof COLORS[number] // 'red' | 'green' | 'blue'
+
+const config = {
+  apiUrl: 'https://api.example.com',
+  timeout: 5000
+} as const
+```
+
+```ts
+// Not Recommended
+const COLORS = ['red', 'green', 'blue'] // string[]
+```
+
+## References
 
 - TypeScript Handbook: https://www.typescriptlang.org/docs/handbook/intro.html
 - TSConfig Reference: https://www.typescriptlang.org/tsconfig/

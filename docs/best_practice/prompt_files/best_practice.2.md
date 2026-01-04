@@ -45,7 +45,7 @@ description: 'Technology-agnostic blueprint generator for creating comprehensive
   - Read-only: `['search', 'search/codebase', 'usages']`
   - Documentation系: `['edit/editFiles', 'fetch', 'todos']`
   - Full workflow: `['changes', 'search/codebase', 'edit/editFiles', 'problems', 'githubRepo', 'runCommands/...']`
-  
+
 - **パターン**: タスクに必要な最小セットを列挙し、破壊的操作を含む場合は本文で確認ステップを明記
 
 例:
@@ -114,8 +114,8 @@ tools: ['changes', 'search/codebase', 'edit/editFiles', 'problems', 'search']
 - **Stakeholders**: `${input:Stakeholders}`
 
 ## Input Validation
-If any of the required inputs are not provided or cannot be determined 
-from the conversation history, ask the user to provide the missing 
+If any of the required inputs are not provided or cannot be determined
+from the conversation history, ask the user to provide the missing
 information before proceeding with ADR generation.
 
 ## Requirements
@@ -126,7 +126,7 @@ information before proceeding with ADR generation.
 - Structure for machine parsing and human reference
 - Use coded bullet points (3-4 letter codes + 3-digit numbers) for multi-item sections
 
-The ADR must be saved in the `/docs/adr/` directory using the naming 
+The ADR must be saved in the `/docs/adr/` directory using the naming
 convention: `adr-NNNN-[title-slug].md`...
 
 ## Required Documentation Structure
@@ -166,8 +166,8 @@ ${VERSIONING="Semantic|CalVer|Custom"}
 
 ```markdown
 ## Workflow
-1. **Confirm Inputs** – Ensure at least one target file is provided. 
-   If missing, respond with: 
+1. **Confirm Inputs** – Ensure at least one target file is provided.
+   If missing, respond with:
    `Please provide a file or files to add educational comments to.`
 ```
 
@@ -195,7 +195,7 @@ Create a `.github/copilot-migration-instructions.md` file with this structure...
 For each identified pattern, generate:
    // BEFORE (${SOURCE_REFERENCE})
    [OLD_CODE_EXAMPLE]
-   // AFTER (${TARGET_REFERENCE}) 
+   // AFTER (${TARGET_REFERENCE})
    [NEW_CODE_EXAMPLE]
 
 ### Phase 4: Validation and Optimization
@@ -211,9 +211,9 @@ For each identified pattern, generate:
 ### 反復と条件付き実行
 
 ```markdown
-2. **Identify File(s)** – If multiple matches exist, present an ordered 
+2. **Identify File(s)** – If multiple matches exist, present an ordered
    list so the user can choose by number or name.
-3. **Review Configuration** – Combine the prompt defaults with user-specified 
+3. **Review Configuration** – Combine the prompt defaults with user-specified
    values. Interpret obvious typos (e.g., `Line Numer`) using context.
 ```
 
@@ -243,7 +243,7 @@ Blueprint生成プロンプトでは、Copilot が自律的に実行できる範
 ```markdown
 ## Educational Commenting Rules
 ### Safety and Compliance
-- Do not alter namespaces, imports, module declarations, or encoding headers 
+- Do not alter namespaces, imports, module declarations, or encoding headers
   in a way that breaks execution.
 - Avoid introducing syntax errors
 - Input data as if typed on the user's keyboard.
@@ -277,7 +277,7 @@ date: "YYYY-MM-DD"
 ### 条件分岐でテンプレート出し分け
 
 ```markdown
-${CODE_QUALITY_FOCUS.includes("Maintainability") || CODE_QUALITY_FOCUS == "All" ? 
+${CODE_QUALITY_FOCUS.includes("Maintainability") || CODE_QUALITY_FOCUS == "All" ?
 `### Maintainability
 - Write self-documenting code with clear naming
 - Follow the naming and organization conventions evident in the codebase
@@ -330,7 +330,7 @@ When context files don't provide specific guidance:
 
 ```markdown
 ## Input Validation
-If any of the required inputs are not provided..., ask the user to 
+If any of the required inputs are not provided..., ask the user to
 provide the missing information before proceeding.
 ```
 
@@ -355,13 +355,13 @@ Educational Commentsプロンプトでは明確な行数ルールを設定:
 
 ```markdown
 ## Objectives
-3. Increase the total line count by **125%** using educational comments only 
+3. Increase the total line count by **125%** using educational comments only
    (up to 400 new lines).
 
 ### Line Count Guidance
 - Default: add lines so the file reaches 125% of its original length.
 - Hard limit: never add more than 400 educational comment lines.
-- Large files: when the file exceeds 1,000 lines, aim for no more than 300 
+- Large files: when the file exceeds 1,000 lines, aim for no more than 300
   educational comment lines.
 ```
 
@@ -381,11 +381,11 @@ For each identified pattern, generate:
 // BEFORE (${SOURCE_REFERENCE})
 [OLD_CODE_EXAMPLE]
 
-// AFTER (${TARGET_REFERENCE}) 
+// AFTER (${TARGET_REFERENCE})
 [NEW_CODE_EXAMPLE]
 
 // COPILOT INSTRUCTIONS
-When you see this pattern [TRIGGER], transform it to [NEW_PATTERN] 
+When you see this pattern [TRIGGER], transform it to [NEW_PATTERN]
 following these steps: [STEPS]
 \`\`\`
 ```
@@ -421,7 +421,7 @@ superseded_by: ""
 ### ファイル選択ロジック
 
 ```markdown
-2. **Identify File(s)** – If multiple matches exist, present an ordered list 
+2. **Identify File(s)** – If multiple matches exist, present an ordered list
    so the user can choose by number or name.
 ```
 

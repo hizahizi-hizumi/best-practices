@@ -1,419 +1,305 @@
 ---
-description: 'VS Code Copilot カスタムエージェント作成のベストプラクティス'
+description: 'Best practices for creating VS Code Copilot custom agents'
 applyTo: '**/.github/agents/**/*.agent.md, **/.github/chatmodes/**/*.chatmode.md'
 ---
 
-# カスタムエージェント作成ガイドライン
+# Custom Agent Creation Guidelines
 
-特定の開発タスクに特化したAI設定を提供するカスタムエージェントを作成する際のベストプラクティスです。
+Best practices for creating custom agents specialized for specific development tasks in VS Code.
 
-## YAMLフロントマター設計
+## Core Principles
 
-### 必須プロパティ
+### 1. Principle of Least Privilege
+- Grant only the minimum necessary tools
+- Exercise particular caution when using the `execute` tool
+- Grant only `["read", "search"]` for read-only tasks
 
-#### description（必須）
+### 2. Clear Role Definition
+- Describe the agent's role in a single sentence
+- Clearly define the scope of responsibility
+- Explicitly state what should and should not be done
 
-エージェントの目的と機能を明確に記述してください。
+### 3. Concrete Instructions
+- Provide actionable and specific steps
+- Avoid abstract expressions
+- Clearly specify the output format
+
+## YAML Front Matter
+
+### description (Required)
+
+Describe the agent's purpose and functionality in 50-100 characters.
 
 ```yaml
-# 良い例
-description: テストカバレッジと品質を向上させ、本番コードを変更しないテスト専門家
+# Recommended
+description: Test specialist that improves test coverage without modifying production code
 
-# 悪い例
-description: テスト用エージェント
+# Not Recommended
+description: Testing agent
 ```
 
-- 具体的で簡潔な説明を記述する
-- チャット入力フィールドのプレースホルダーとして表示される
-- 50〜100文字程度が目安
+**Reason**: Displayed as a placeholder in the chat input field
 
-### オプションプロパティ設計
+### name
 
-#### name
+Specify a clear, purpose-driven name in kebab-case (e.g., `test-specialist`).
 
-- 目的が明確でわかりやすい名前を付ける
-- ケバブケース（`test-specialist`）を使用
-- 省略時はファイル名が使用される
+### tools - Minimum Privilege Settings by Task
 
-#### tools - 最小権限の原則を適用
+**Grant only the minimum necessary tools.**
 
-**必要最小限のツールのみを許可してください。**
-
-| タスクタイプ | 推奨ツール | 理由 |
+| Task Type | Recommended Tools | Reason |
 |----------|----------|------|
-| 計画・分析 | `["read", "search", "fetch"]` | 読み取り専用で、誤った変更を防止 |
-| 実装 | `["read", "edit", "search", "execute"]` | コード変更と実行が必要 |
-| レビュー | `["read", "search"]` | コード確認のみ、変更は不要 |
-| テスト作成 | `["read", "edit", "search", "execute"]` | テストファイルの作成と実行 |
-| ドキュメント作成 | `["read", "edit", "search"]` | ドキュメントファイルの作成と更新 |
+| Planning/Analysis | `["read", "search", "fetch"]` | Read-only, prevents accidental modifications |
+| Implementation | `["read", "edit", "search", "execute"]` | Code changes and execution |
+| Review | `["read", "search"]` | Verification only, no changes required |
 
 ```yaml
-# 良い例 - 読み取り専用タスク
+# Recommended - Read-only
 tools: ["read", "search", "fetch"]
 
-# 良い例 - 実装タスク
-tools: ["read", "edit", "search", "execute"]
-
-# 避けるべき - すべてのツールを許可
+# Not Recommended - Full privileges
 tools: ["*"]
 ```
 
-**利用可能なツールエイリアス**:
+**Reason**: Minimizes security risks and clarifies the agent's role
 
-- `read` - ファイル内容の読み取り
-- `edit` - ファイルの編集（str_replace等）
-- `search` - ファイルやテキストの検索（grep, glob）
-- `execute` - シェルコマンドの実行
-- `agent` - 他のカスタムエージェントの呼び出し
-- `web` - URLからのコンテンツ取得、Web検索
-- `todo` - 構造化タスクリストの管理
+**Available Tool Aliases**:
+- `read` - Read file contents
+- `edit` - Edit files (str_replace, etc.)
+- `search` - Search files and text (grep, glob)
+- `execute` - Execute shell commands
+- `agent` - Invoke other custom agents
+- `web` - Fetch URL content, web search
+- `todo` - Structured task list management
 
-**MCPサーバーツールの指定**:
-
+**Specifying MCP Server Tools**:
 ```yaml
-# 特定のMCPツール
-tools: ["read", "edit", "github/list-repos"]
-
-# MCPサーバーのすべてのツール
-tools: ["playwright/*", "github/*"]
+tools: ["read", "edit", "github/list-repos"]  # Specific tool
+tools: ["playwright/*"]  # All tools from a server
 ```
 
-#### model
+### model
 
-タスクの複雑さに応じてモデルを選択してください。
-
-```yaml
-# 複雑な分析・実装タスク
-model: Claude Sonnet 4
-
-# シンプルなフォーマット変更・軽量タスク
-model: Claude Haiku
-```
-
-#### target
-
-実行環境を制限する場合に指定します。
+Select a model based on task complexity.
 
 ```yaml
-# VS Codeのみで利用
-target: vscode
-
-# GitHub Copilotのみで利用
-target: github-copilot
+model: Claude Sonnet 4  # Complex analysis and implementation
+model: Claude Haiku     # Simple formatting changes
 ```
 
-#### infer
+**Reason**: Cost optimization and improved response speed
 
-自動エージェント選択を無効にする場合に使用します。
+### target
+
+Restrict the execution environment.
 
 ```yaml
-# 手動選択が必要な場合
-infer: false
-
-# デフォルトは true（自動選択）
+target: vscode           # VS Code only
+target: github-copilot   # GitHub Copilot only
 ```
 
-#### handoffs - エージェント間の遷移を設計
+### infer
 
-順次ワークフローを設計してください。
+Control automatic agent selection.
+
+```yaml
+infer: false  # When manual selection is required
+# Default is true
+```
+
+### handoffs - Designing Inter-Agent Transitions
+
+Define sequential workflows.
 
 ```yaml
 handoffs:
-  - label: 計画を確認
+  - label: Review the plan
     agent: reviewer
-    prompt: この実装計画をレビューし、改善提案をしてください。
-    send: false
-  - label: 実装を開始
-    agent: implementation
-    prompt: 計画に基づいてコードを実装してください。
+    prompt: Please review this implementation plan and provide improvement suggestions.
     send: false
 ```
 
-**send プロパティの使い分け**:
+**Using the send Property**:
+- `send: false` - User confirms/edits the prompt (recommended)
+- `send: true` - Auto-send prompt (only for certain next steps)
 
-- `send: false` - ユーザーがプロンプトを確認・編集してから送信（推奨）
-- `send: true` - プロンプトを自動送信（確実な次ステップの場合のみ）
+### argument-hint
 
-#### argument-hint
-
-チャット入力フィールドに表示されるヒントテキストを提供します。
-
-```yaml
-argument-hint: "機能名または説明を入力してください"
-```
-
-## エージェント本体（プロンプト）の設計
-
-### 明確な役割定義
-
-エージェントの役割、責任、実行方法を明確に記述してください。
-
-```markdown
-# 計画策定の専門家
-
-あなたは技術計画の専門家で、包括的な実装計画の作成に特化しています。
-
-## 責任範囲
-
-- 要件を分析し、実行可能なタスクに分解する
-- 詳細な技術仕様とアーキテクチャドキュメントを作成する
-- 明確なステップ、依存関係、タイムラインを含む実装計画を生成する
-- API設計、データモデル、システム間の相互作用を文書化する
-
-## 実行ガイドライン
-
-- 明確な見出し、タスク分解、受け入れ基準で計画を構造化する
-- テスト、デプロイメント、潜在的なリスクへの配慮を含める
-- コードの実装ではなく、徹底的な文書化に焦点を当てる
-```
-
-### タスク固有の指示
-
-具体的で実行可能な手順を提供してください。
-
-```markdown
-## コードレビュープロセス
-
-1. **セキュリティレビュー**: 一般的な脆弱性（SQLインジェクション、XSS、認証の問題）をチェック
-2. **パフォーマンス分析**: 非効率なアルゴリズム、不要なループ、最適化の機会を特定
-3. **コード品質**: コーディング標準への準拠、命名規則、コメントの明確さを確認
-4. **テストカバレッジ**: 既存のテストが変更をカバーしているか評価
-5. **ドキュメント**: 変更がドキュメントされ、理解しやすいことを確認
-```
-
-### 制約と境界の明示
-
-エージェントが何をすべきで、何をすべきでないかを明確にしてください。
-
-```markdown
-## 制約事項
-
-- テストファイルのみに焦点を当て、特に要求されない限り本番コードを変更しない
-- すべてのテストは独立性、決定性、十分な文書化を確保する
-- 言語とフレームワークに適したテストパターンを使用する
-```
-
-### Markdownリンクによる参照
-
-他のファイルやカスタムインストラクションを参照して、重複を避けてください。
-
-```text
-詳細なコーディング標準については、プロジェクトのコーディング規約を参照してください。
-```
-
-### ツール参照の記法
-
-エージェント本文でツールを参照する場合は、`#tool:<tool-name>` 構文を使用します。
-
-```text
-プロジェクト構造を理解するために、#tool:search を使用してコードベースを探索してください。
-```
-
-## セキュリティベストプラクティス
-
-### シークレット管理
-
-**絶対に平文でシークレットをファイルに含めないでください。**
+Provide hint text displayed in the chat input field.
 
 ```yaml
-# 良い例 - シークレット参照
+argument-hint: "Enter a feature name or description"
+```
+
+## Agent Body (Prompt) Design
+
+### Clarifying Role and Responsibilities
+
+Define the agent's role in a single sentence and clearly describe the scope of responsibility.
+
+```markdown
+# Planning Specialist
+
+As a technical planning specialist, I focus on creating comprehensive implementation plans.
+
+## Scope of Responsibility
+
+- Analyze requirements and break them down into actionable tasks
+- Document detailed technical specifications and architecture
+- Generate plans with clear steps, dependencies, and timelines
+
+## Constraints
+
+- Do not implement code; focus on thorough documentation
+- Structure plans with clear headings, task breakdowns, and acceptance criteria
+```
+
+### Task-Specific Instructions
+
+Provide concrete and actionable steps in list format.
+
+```markdown
+## Code Review Process
+
+1. **Security**: Check for SQL injection, XSS, authentication issues
+2. **Performance**: Identify inefficient algorithms and unnecessary loops
+3. **Code Quality**: Verify coding standards, naming conventions, and comments
+4. **Test Coverage**: Evaluate whether changes are covered by tests
+```
+
+### References to Other Files
+
+Reference other files using Markdown links to avoid duplication.
+
+```markdown
+For detailed coding standards, refer to the project's coding conventions.
+```
+
+### Tool Reference Notation
+
+Use the `#tool:<tool-name>` syntax to reference tools.
+
+```markdown
+Use #tool:search to explore the codebase.
+```
+
+## Security Best Practices
+
+### Secret Management
+
+Do not include secrets in plaintext in files.
+
+```yaml
+# Recommended
 env:
   API_KEY: ${{ secrets.API_KEY }}
 
-# 悪い例 - 平文でシークレットを記述
+# Not Recommended
 env:
   API_KEY: "my-secret-key"
 ```
 
-組織/エンタープライズレベルのエージェントでシークレットを参照する場合:
+**Reason**: Prevents risk of secret leakage
 
-- リポジトリの "copilot" 環境に設定する
-- `${{ secrets.SECRET_NAME }}` 構文を使用する
+For organization-level agents, set them in the repository's "copilot" environment and use the `${{ secrets.SECRET_NAME }}` syntax.
 
-### ツールアクセス制限
+### Tool Access Restrictions
 
-- 必要最小限のツールのみを許可する
-- `execute` ツールの使用には特に注意する
+Grant only the minimum necessary tools, and exercise particular caution with the `execute` tool.
 
 ```yaml
-# セキュリティレビューエージェント
-tools: ["read", "search"]  # executeは不要
+# Security review agent
+tools: ["read", "search"]  # execute not required
 ```
 
-### 環境の分離
+### Environment Isolation
 
-`target` プロパティを使用して実行環境を制限してください。
+Restrict the execution environment using the `target` property.
 
 ```yaml
-target: vscode  # VS Codeのみで利用
+target: vscode  # Use only in VS Code
 ```
 
-## 一般的なアンチパターンと解決策
+## Common Anti-Patterns and Solutions
 
-### ❌ アンチパターン1: ツール権限が広すぎる
+### ❌ Tool Privileges Too Broad
 
 ```yaml
-# 避けるべき
+# Not Recommended
 tools: ["*"]
 ```
 
-**解決策**: タスクに必要な最小限のツールのみを許可
+**Solution**: Grant only the minimum tools required for the task
 
 ```yaml
-# 推奨
-tools: ["read", "search"]  # 分析タスク
+# Recommended
+tools: ["read", "search"]  # For analysis tasks
 ```
 
-### ❌ アンチパターン2: 不明確な指示
+### ❌ Unclear Instructions
 
 ```markdown
-# 避けるべき
-コードを改善してください。
+# Not Recommended
+Improve the code.
 ```
 
-**解決策**: 具体的で実行可能な指示
+**Solution**: Concrete and actionable instructions
 
 ```markdown
-# 推奨
-## 改善ガイドライン
-
-1. 冗長なコードを削除する
-2. 複雑な関数をより小さな関数に分割する
-3. 適切なエラーハンドリングを追加する
-4. パフォーマンス上のボトルネックを特定する
+# Recommended
+1. Remove redundant code
+2. Break down complex functions into smaller ones
+3. Add appropriate error handling
 ```
 
-### ❌ アンチパターン3: ハンドオフの欠如
+### ❌ Using the Same Model for All Tasks
 
-エージェント間の遷移が手動で煩雑になります。
-
-**解決策**: 適切なハンドオフを定義
+**Solution**: Select models based on task complexity
 
 ```yaml
-handoffs:
-  - label: 次のステップへ
-    agent: next-agent
-    prompt: 前のステップで生成された内容を確認し、次の作業を進めてください。
-    send: false
+model: Claude Sonnet 4  # Complex analysis
+model: Claude Haiku     # Simple formatting changes
 ```
 
-### ❌ アンチパターン4: すべてのタスクに同じモデルを使用
+## Performance Optimization
 
-**解決策**: タスクの複雑さに応じてモデルを選択
+### Efficient Tool Selection
 
-```yaml
-# 複雑な分析タスク
-model: Claude Sonnet 4
+Do not include unnecessary tools (causes processing slowdown).
 
-# シンプルなフォーマット変更
-model: Claude Haiku
-```
+### Prompt Size Management
 
-## パフォーマンス最適化
+Prompts have a maximum of 30,000 characters; use reference links for large files.
 
-### ツールの効率的な選択
+### Model Selection Optimization
 
-- 不要なツールを含めない（処理が遅くなる可能性）
-- タスクに特化したツールセットを定義
+Use lightweight models (Haiku) for lightweight tasks, and high-performance models (Sonnet) only for complex tasks.
 
-### プロンプトサイズの管理
+## Maintainability and Scalability
 
-- プロンプトは最大30,000文字
-- 大きなファイルは参照リンクを使用
+### Modularization
 
-```text
-詳細は別ドキュメントを参照してください。
-```
+Separate reusable instructions into separate files and reference them with Markdown links.
 
-### モデル選択の最適化
+### Version Control
 
-- 軽量タスクには軽量モデル（Haiku）を使用
-- 複雑なタスクのみ高性能モデル（Sonnet, Opus）を使用
+Manage agent files with Git and track change history.
 
-## 保守性とスケーラビリティ
+### Unified Naming Conventions
 
-### モジュール化
+Agent names should clearly reflect their purpose, and file names should use kebab-case (e.g., `test-specialist.agent.md`).
 
-再利用可能な指示は別ファイルに分離し、Markdownリンクで参照してください。
+## Organization-Level Best Practices
 
-```text
-共通のコーディング標準については、プロジェクトのインストラクションファイルを参照してください。
-```
+### Organization/Enterprise-Level Agents
 
-### バージョン管理
-
-- エージェントファイルはGitで管理する
-- 変更履歴を追跡する
-- ブランチやタグで異なるバージョンを管理する
-
-### 命名規則の統一
-
-- エージェント名は目的を明確に反映
-- ファイル名はケバブケース（例: `test-specialist.agent.md`）
-
-### ドキュメント化
-
-- 各エージェントの目的と使用方法を明確に記述
-- チーム内で共有するガイドラインを作成
-
-## テストと検証
-
-### エージェントのテスト
-
-- 作成したエージェントを実際のタスクでテストする
-- 想定外の動作を確認し、指示を改善する
-
-### ハンドオフのテスト
-
-- エージェント間の遷移が適切に機能するか確認する
-- プロンプトの内容が次のエージェントに適切に渡されるか検証する
-
-### ツール利用の検証
-
-- 指定したツールが適切に使用されているか確認する
-- 不要なツールが使用されていないか確認する
-
-## カスタムインストラクションとの連携
-
-### 重複を避ける
-
-- 共通のルールはカスタムインストラクションに記述し、エージェントから参照する
-- エージェント固有の指示のみをエージェントファイルに含める
-
-### 階層的な組織化
-
-プロジェクト全体 → ファイルタイプ → エージェント固有の順で指示を構造化してください。
-
-エージェントファイルの例:
-
-```yaml
----
-name: code-reviewer
-description: コーディング標準に従ってコードをレビュー
-tools: ["read", "search"]
----
-```
-
-```text
-# コードレビュー専門家
-
-このエージェントは、プロジェクトのコーディング標準を厳密に適用します。
-
-詳細なコーディング標準については、プロジェクトのコーディング規約を参照してください。
-```
-
-## 組織レベルのベストプラクティス
-
-### 組織/エンタープライズレベルのエージェント
-
-- `.github-private` リポジトリの `agents/` ディレクトリに配置
-- 組織またはエンタープライズ全体で利用可能
-- MCPサーバー設定を含めることができる
+Place them in the `agents/` directory of the `.github-private` repository; they can include MCP server configuration.
 
 ```yaml
 ---
 name: org-security-reviewer
-description: 組織のセキュリティ標準に基づくレビューエージェント
+description: Review agent based on organizational security standards
 tools: ['read', 'search', 'security-scanner/*']
 mcp-servers:
   security-scanner:
@@ -426,141 +312,112 @@ mcp-servers:
 ---
 ```
 
-### MCPサーバーの設定
+### MCP Server Configuration
 
-組織/エンタープライズレベルのエージェントでは、`mcp-servers` プロパティを使用してMCPサーバーを設定できます。
+**Syntax for Referencing Environment Variables and Secrets**:
+- `${{ secrets.SECRET_NAME }}` - Secret reference
+- `${{ var.VARIABLE_NAME }}` - Environment variable reference
 
-**環境変数とシークレットの参照構文**:
+## Practical Examples
 
-- `${{ secrets.SECRET_NAME }}` - シークレット参照
-- `${{ var.VARIABLE_NAME }}` - 環境変数参照
-
-## 実用例
-
-### 例1: テスト専門家エージェント
+### Example 1: Test Specialist Agent
 
 ```markdown
 ---
 name: test-specialist
-description: テストカバレッジと品質を向上させ、本番コードを変更しないテスト専門家
+description: Test specialist that improves test coverage without modifying production code
 tools: ["read", "edit", "search", "execute"]
 handoffs:
-  - label: コードレビューを依頼
+  - label: Request code review
     agent: code-reviewer
-    prompt: 作成したテストコードをレビューしてください。
+    prompt: Please review the test code I created.
     send: false
 ---
 
-# テスト専門家
+# Test Specialist
 
-包括的なテストを通じてコード品質を向上させることに焦点を当てたテスト専門家です。
+Improve code quality through comprehensive testing.
 
-## 責任範囲
+## Scope of Responsibility
 
-- 既存のテストを分析し、カバレッジの欠落を特定する
-- ベストプラクティスに従って、ユニットテスト、統合テスト、E2Eテストを作成する
-- テスト品質を確認し、保守性向上の提案を行う
-- テストが独立性、決定性、十分な文書化を確保する
-- 特に要求されない限り、テストファイルのみに焦点を当て、本番コードを変更しない
+- Analyze existing tests and identify coverage gaps
+- Create tests following best practices
+- Ensure tests are independent, deterministic, and well-documented
+- Do not modify production code unless specifically requested
 
-## 実行ガイドライン
+## Execution Guidelines
 
-- テストの説明を明確にする
-- 言語とフレームワークに適したテストパターンを使用する
-- テストの可読性と保守性を優先する
+- Provide clear test descriptions
+- Use test patterns appropriate for the language and framework
+- Prioritize readability and maintainability
 ```
 
-### 例2: 実装計画策定エージェント
+### Example 2: Implementation Planning Agent
 
 ```markdown
 ---
 name: implementation-planner
-description: 詳細な実装計画と技術仕様をMarkdown形式で作成する
+description: Create detailed implementation plans and technical specifications in Markdown format
 tools: ["read", "search", "fetch"]
 model: Claude Sonnet 4
 handoffs:
-  - label: 実装を開始
+  - label: Start implementation
     agent: agent
-    prompt: 上記の計画を実装してください。
+    prompt: Please implement the above plan.
     send: false
 ---
 
-# 実装計画策定の専門家
+# Implementation Planning Specialist
 
-包括的な実装計画の作成に焦点を当てた技術計画の専門家です。
+Focus on creating comprehensive implementation plans.
 
-## 責任範囲
+## Scope of Responsibility
 
-- 要件を分析し、実行可能なタスクに分解する
-- 詳細な技術仕様とアーキテクチャドキュメントを作成する
-- 明確なステップ、依存関係、タイムラインを含む実装計画を生成する
-- API設計、データモデル、システム間の相互作用を文書化する
-- 開発チームが従うことができる構造化された計画を含むMarkdownファイルを作成する
+- Analyze requirements and break them down into actionable tasks
+- Document detailed technical specifications and architecture
+- Generate plans with clear steps, dependencies, and timelines
 
-## 実行ガイドライン
+## Execution Guidelines
 
-- 明確な見出し、タスク分解、受け入れ基準で計画を構造化する
-- テスト、デプロイメント、潜在的なリスクへの配慮を含める
-- コードの実装ではなく、徹底的な文書化に焦点を当てる
+- Structure plans with clear headings, task breakdowns, and acceptance criteria
+- Include considerations for testing, deployment, and potential risks
+- Focus on thorough documentation rather than code implementation
 ```
 
-### 例3: コードレビューエージェント
+### Example 3: Code Review Agent
 
 ```markdown
 ---
 name: code-reviewer
-description: セキュリティ、パフォーマンス、品質の観点からコードをレビューする
+description: Review code from security, performance, and quality perspectives
 tools: ["read", "search"]
 ---
 
-# コードレビュー専門家
+# Code Review Specialist
 
-セキュリティ、パフォーマンス、コード品質の観点から徹底的なコードレビューを実施します。
+Conduct thorough code reviews from security, performance, and code quality perspectives.
 
-## レビュープロセス
+## Review Process
 
-1. **セキュリティ分析**
-   - 一般的な脆弱性（SQLインジェクション、XSS、CSRF）をチェック
-   - 認証と認可のメカニズムを確認
-   - 機密情報の取り扱いを評価
+1. **Security**: Check for SQL injection, XSS, CSRF, authentication mechanisms
+2. **Performance**: Identify inefficient algorithms and unnecessary loops
+3. **Code Quality**: Verify coding standards, naming conventions, and comments
+4. **Test Coverage**: Confirm that changes are covered by tests
 
-2. **パフォーマンス評価**
-   - 非効率なアルゴリズムや不要なループを特定
-   - データベースクエリの最適化の機会を見つける
-   - メモリ使用パターンを確認
+## Output Format
 
-3. **コード品質チェック**
-   - コーディング標準への準拠を確認
-   - 命名規則とコメントの明確さを評価
-   - コードの可読性と保守性を検証
-
-4. **テストカバレッジ**
-   - 既存のテストが変更をカバーしているか確認
-   - 不足しているテストケースを特定
-
-## 出力形式
-
-レビュー結果は以下の形式で提供してください：
-
-- **重大な問題**: セキュリティリスクやバグ
-- **改善提案**: パフォーマンスとコード品質の向上
-- **軽微な指摘**: スタイルや命名の改善
-- **良い点**: 評価すべき実装部分
+- **Critical Issues**: Security risks and bugs
+- **Improvement Suggestions**: Performance and code quality enhancements
+- **Minor Comments**: Style and naming improvements
+- **Positive Aspects**: Commendable implementation details
 ```
 
-## まとめ: 重要な原則
+## Summary: Key Principles
 
-カスタムエージェントを効果的に活用するための重要なポイント：
-
-1. **明確な役割定義** - エージェントの目的と責任を明確にする
-2. **最小権限の原則** - 必要最小限のツールのみを許可
-3. **具体的な指示** - 実行可能で明確な指示を提供
-4. **ハンドオフの活用** - エージェント間のスムーズな遷移を設計
-5. **セキュリティ** - シークレット管理とツールアクセス制限を徹底
-6. **モジュール化** - 再利用可能な指示を分離し、保守性を向上
-7. **テストと改善** - 実際の使用を通じて継続的に改善
-8. **カスタムインストラクションとの統合** - 共通ルールを分離し、重複を避ける
-9. **パフォーマンス最適化** - タスクに応じた適切なモデルとツール選択
-10. **ドキュメント化** - チーム内で共有するガイドラインを作成
-
-これらのベストプラクティスに従うことで、効率的で安全、かつ保守しやすいカスタムエージェントを作成できます。
+1. **Clear Role Definition** - Describe the agent's purpose and responsibilities in a single sentence
+2. **Principle of Least Privilege** - Grant only the minimum necessary tools
+3. **Concrete Instructions** - Provide actionable and clear instructions
+4. **Leverage Handoffs** - Design smooth transitions between agents
+5. **Security** - Enforce secret management and tool access restrictions
+6. **Modularization** - Separate reusable instructions to improve maintainability
+7. **Appropriate Model Selection** - Choose models based on task complexity

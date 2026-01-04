@@ -1,55 +1,121 @@
 ---
-description: 'Bun（ランタイム/パッケージマネージャー/テスト/バンドラ）を使うプロジェクトで、再現性・セキュリティ・運用性を高めるためのベストプラクティス規則'
+description: 'Best practice rules for projects using Bun (runtime/package manager/test runner/bundler) to enhance reproducibility, security, and operational excellence'
 applyTo: '**/package.json, **/bun.lock*, **/bunfig.toml, **/*.ts, **/*.tsx, **/*.js, **/*.jsx, **/*.mjs, **/*.cjs, **/*.cts, **/*.mts, Dockerfile, **/Dockerfile.*, **/.github/workflows/**/*.yml, **/.github/workflows/**/*.yaml'
 ---
 
-# Bun ベストプラクティス（Copilot向け）
+# Bun Best Practices (for Copilot)
 
-GitHub Copilot が Bun を使うコード/設定/CI を生成・更新する際に、再現性・セキュリティ・保守性を損なわないための指示です。
+## Purpose and Scope
 
-## 基本方針
+Ensure reproducibility, security, and maintainability when GitHub Copilot generates or updates code, configuration, and CI using Bun.
 
-- ロックファイル（`bun.lock*`）を前提に「再現可能なインストール」を最優先する
-- 依存インストール時の任意コード実行（postinstall 等）を最小化する
-- TypeScript は「実行」と「型検査」を分離する（Bun は実行時に型検査しない）
-- モノレポは workspaces と linker の前提を揃え、ファントム依存を防ぐ
-- `.env` 自動読み込みを前提にしすぎず、CI/本番での振る舞いを明示する
+**Applicable Scope**: All projects using Bun as runtime, package manager, test runner, or bundler.
 
-## 依存関係とCI（再現性）
+## Core Principles
 
-- CI では `bun install` ではなく `bun ci`（または `bun install --frozen-lockfile`）を使う
-- `bun.lock*` は必ずコミットし、CI では lockfile の更新を許容しない
-- 本番向けイメージ/ジョブでは `--production` を使い、devDependencies を入れない
+### Reproducibility
+- Use lock files (`bun.lock*`) for reproducible installs
+- Commit lock files to version control
+- Never allow lock file updates in CI environments
 
-**✅ 良い例**
+**Rationale**: Lock files guarantee identical dependency versions across all environments, preventing "works on my machine" issues.
+
+### Security
+- Minimize arbitrary code execution during dependency installation
+- Explicitly allow only necessary dependencies in `trustedDependencies`
+- Review all lifecycle scripts before trusting packages
+
+**Rationale**: Malicious or compromised packages can execute arbitrary code during installation, posing security risks.
+
+### Type Safety Separation
+- Separate TypeScript execution from type checking
+- Run `tsc --noEmit` explicitly in CI pipelines
+- Never rely on Bun runtime for type safety
+
+**Rationale**: Bun executes TypeScript without type checking, allowing runtime errors that TypeScript should prevent.
+
+### Monorepo Integrity
+- Align workspace and linker assumptions across team
+- Prevent phantom dependencies in monorepo setups
+- Use workspace protocol for inter-package dependencies
+
+### Environment Configuration
+- Avoid relying on `.env` auto-loading in production
+- Explicitly inject environment variables in CI/production
+- Keep secrets out of code and bundles
+
+## Dependencies and CI
+
+### Installation Commands
+- Use `bun ci` or `bun install --frozen-lockfile` in CI environments
+- Never use plain `bun install` in CI pipelines
+
+**Rationale**: Plain `bun install` may update lock files, causing non-reproducible builds and unexpected dependency changes.
+
+### Lock File Management
+- Commit `bun.lock*` files to version control
+- Configure CI to fail if lock files are modified
+- Reject pull requests that modify lock files without justification
+
+### Production Dependencies
+- Use `--production` flag for production images and jobs
+- Exclude devDependencies from production environments
+- Verify production bundle size after dependency changes
+
+**Rationale**: DevDependencies increase attack surface and deployment size unnecessarily in production.
+
+**✅ Good Example**
 ```yaml
-# .github/workflows/ci.yml（例）
+# .github/workflows/ci.yml (example)
 - run: bun ci
 - run: bunx tsc --noEmit
 - run: bun test
 ```
 
-**❌ 悪い例（CIでlockfileを更新し得る）**
+**❌ Bad Example (may update lockfile in CI)**
 ```yaml
 - run: bun install
 ```
 
-## セキュリティ（trustedDependencies / minimumReleaseAge / overrides）
+## Security
 
-- 依存のライフサイクルスクリプトを無差別に許可しない
-- 必要な依存のみ `trustedDependencies` で許可し、変更はレビュー対象にする
-- `file:` / `link:` / `git:` / `github:` 由来の依存は、特に慎重に trust する
-- サプライチェーン対策として `minimumReleaseAge` の導入を検討する
-- トランジティブ依存の緊急固定は `overrides` を使い、理由（CVE/互換性）を残す
+### Lifecycle Scripts
+- Avoid allowing lifecycle scripts indiscriminately
+- List only necessary packages in `trustedDependencies`
+- Require code review for `trustedDependencies` changes
+- Document reason for each trusted dependency
 
-**✅ 良い例（必要最小限の trust）**
+**Rationale**: Lifecycle scripts execute arbitrary code during installation, enabling supply chain attacks.
+
+### Protocol-Based Dependencies
+- Exercise extreme caution with `file:` protocol dependencies
+- Carefully review `link:` protocol dependencies
+- Audit `git:` and `github:` protocol dependencies thoroughly
+- Prefer npm registry packages over direct repository references
+
+**Rationale**: Non-registry protocols bypass security scanning and version verification mechanisms.
+
+### Supply Chain Protection
+- Implement `minimumReleaseAge` to delay new package adoption
+- Set reasonable age threshold (e.g., 3-7 days)
+- Balance security with feature delivery needs
+
+**Rationale**: Newly published packages may contain undiscovered vulnerabilities or be compromised.
+
+### Dependency Overrides
+- Use `overrides` only for emergency security fixes
+- Document CVE numbers or compatibility issues for each override
+- Remove overrides once upstream packages are updated
+- Review overrides regularly (monthly recommended)
+
+**✅ Good Example (minimal trust)**
 ```json
 {
   "trustedDependencies": ["my-trusted-package"]
 }
 ```
 
-**✅ 良い例（緊急固定の overrides）**
+**✅ Good Example (emergency fix with overrides)**
 ```json
 {
   "overrides": {
@@ -58,20 +124,40 @@ GitHub Copilot が Bun を使うコード/設定/CI を生成・更新する際�
 }
 ```
 
-**❌ 悪い例（許可を広げすぎる）**
+**❌ Bad Example (overly permissive)**
 ```json
 {
   "trustedDependencies": ["*"]
 }
 ```
 
-## Workspaces / モノレポ
+## Workspaces and Monorepos
 
-- ワークスペース間依存は `workspace:*`（または `workspace:^`）で明示する
-- 他パッケージの `src` を相対パスで直参照しない（公開API経由に統一する）
-- linker（`isolated`/`hoisted`）の前提を `bunfig.toml` で明示し、開発者間・CI間で差が出ないようにする
+### Workspace Dependencies
+- Use `workspace:*` protocol for inter-package dependencies
+- Alternatively use `workspace:^` for semver-aware references
+- Never use relative file paths for workspace dependencies
+- Update all workspace references when moving packages
 
-**✅ 良い例（workspaceプロトコル）**
+**Rationale**: Workspace protocol ensures proper dependency resolution and prevents version conflicts.
+
+### Package Boundaries
+- Import only from package entry points (main/exports)
+- Never import from `src` or `dist` directories directly
+- Maintain clear public API contracts between packages
+- Treat each package as an independent module
+
+**Rationale**: Direct imports bypass package boundaries, creating tight coupling and preventing independent versioning.
+
+### Linker Configuration
+- Explicitly configure linker (`isolated` or `hoisted`) in `bunfig.toml`
+- Use same linker setting across all environments
+- Document linker choice in project README
+- Test with the configured linker before deployment
+
+**Rationale**: Inconsistent linker settings cause phantom dependencies and environment-specific failures.
+
+**✅ Good Example (workspace protocol)**
 ```json
 {
   "workspaces": ["packages/*"],
@@ -81,30 +167,73 @@ GitHub Copilot が Bun を使うコード/設定/CI を生成・更新する際�
 }
 ```
 
-**❌ 悪い例（パッケージ境界の破壊）**
+**❌ Bad Example (breaking package boundaries)**
 ```ts
 import { internalThing } from "../../packages/core/src/internal";
 ```
 
-## bunfig.toml と環境変数
+## Configuration Management
 
-- プロジェクト設定は `bunfig.toml` に集約し、チームで共有する
-- `.env` は開発便利機能として扱い、CI/本番では「環境変数注入」を基本にする
-- シークレットはコード/バンドルに含めない
+### Project Configuration
+- Centralize project settings in `bunfig.toml`
+- Commit `bunfig.toml` to version control
+- Share configuration across entire team
+- Document non-obvious configuration choices
 
-**✅ 良い例（CI/本番で .env を無効化する前提）**
+### Environment Variables
+- Treat `.env` files as development convenience only
+- Inject environment variables explicitly in CI/production
+- Never commit `.env` files containing secrets
+- Use platform-specific secret management in production
+
+**Rationale**: `.env` auto-loading is development-specific; production environments require explicit configuration.
+
+### Secret Management
+- Exclude secrets from code and bundles
+- Use environment variables for all secrets
+- Validate presence of required secrets at startup
+- Rotate secrets regularly
+
+### Disabling .env in Production
+- Set `env = false` in `bunfig.toml` for production builds
+- Prevent accidental `.env` file reliance
+- Document environment variable requirements
+
+**✅ Good Example (disable .env for CI/production)**
 ```toml
 # bunfig.toml
 env = false
 ```
 
-## TypeScript（型検査の分離）
+## TypeScript Integration
 
-- Bun 実行だけで型安全を担保したつもりにならない
-- CI では `bunx tsc --noEmit`（または同等）を必ず実行する
-- `@types/bun` は devDependencies に入れる
+### Type Checking Separation
+- Never rely on Bun runtime for type safety
+- Run explicit type checking in separate step
+- Fail CI builds on type errors
+- Type-check before committing code
 
-**✅ 良い例**
+**Rationale**: Bun executes TypeScript without type checking, deferring type errors to runtime.
+
+### CI Type Checking
+- Execute `bunx tsc --noEmit` in all CI pipelines
+- Run type checking before running tests
+- Configure strict TypeScript options
+- Block merges on type check failures
+
+### Development Workflow
+- Add `typecheck` script to package.json
+- Run type checking in watch mode during development
+- Integrate type checking into pre-commit hooks
+- Use editor TypeScript integration
+
+### Type Definitions
+- Install `@types/bun` in devDependencies
+- Keep `@types/*` packages updated
+- Remove unused type definition packages
+- Document custom type definitions
+
+**✅ Good Example**
 ```json
 {
   "scripts": {
@@ -115,7 +244,7 @@ env = false
 }
 ```
 
-**❌ 悪い例（型検査が無い）**
+**❌ Bad Example (no type checking)**
 ```json
 {
   "scripts": {
@@ -124,41 +253,192 @@ env = false
 }
 ```
 
-## テスト（bun test）
+## Testing with Bun
 
-- 基本は `bun test` を使い、安定性を優先する
-- フレーク対策として、順序依存が疑われる場合は `--randomize` / `--seed` を活用する
-- I/O を伴うテストは並列性の影響を受けやすいので、必要に応じて直列化や分離を行う
+### Test Runner
+- Use `bun test` as primary test runner
+- Prioritize test stability over speed
+- Configure timeout for slow tests explicitly
+- Run tests in CI with verbose output
 
-## ビルド（bun build / Bun.build）
+### Flaky Test Prevention
+- Use `--randomize` flag to detect order dependencies
+- Set `--seed` value for reproducible test runs
+- Isolate tests with shared state
+- Document known flaky tests and mitigation strategies
 
-- `target` と `format` は明示し、実行環境（browser/node/bun）と齟齬のない設定にする
-- 環境変数のインライン化は最小限にし、公開してよいキーに限定する
+**Rationale**: Order-dependent tests hide bugs and cause CI failures unrelated to code changes.
 
-## Shell 実行の安全性
+### Parallel Execution
+- Serialize tests involving I/O operations
+- Use test isolation for database tests
+- Mock external service dependencies
+- Avoid shared file system state
 
-- ユーザー入力を外部シェル（例: `bash -c`）にそのまま渡さない
-- スクリプトでシェルを使う場合は、変数を必ずクォートし、失敗を見逃さない
+### Test Organization
+- Group related tests in describe blocks
+- Name tests descriptively (what and expected outcome)
+- Place test files adjacent to source files or in `__tests__` directories
+- Follow naming convention: `*.test.ts` or `*.spec.ts`
 
-## Docker（最小要件）
+## Build Configuration
 
-- 公式イメージ（`oven/bun`）を使い、依存インストールのキャッシュが効く `COPY` 順序にする
-- `--frozen-lockfile` を使い、イメージ内で lockfile が変わる状態を許容しない
-- 可能ならマルチステージで `--production` な依存だけを実行イメージに入れる
+### Target and Format
+- Explicitly specify `target` option (browser/node/bun)
+- Explicitly specify `format` option (esm/cjs/iife)
+- Match target to actual runtime environment
+- Verify build output compatibility before deployment
 
-**✅ 良い例（依存を先にCOPY）**
+**Rationale**: Implicit defaults may produce incompatible output for target environment.
+
+### Environment Variable Inlining
+- Minimize environment variable inlining during build
+- Inline only public, non-sensitive values
+- Document which variables are inlined
+- Validate inlined values do not contain secrets
+
+**Rationale**: Inlined variables become permanent in bundles and cannot be changed without rebuild.
+
+### Build Optimization
+- Enable minification for production builds
+- Generate source maps for debugging
+- Analyze bundle size regularly
+- Split large bundles when appropriate
+
+### Output Validation
+- Test built artifacts in target environment
+- Verify external dependencies resolve correctly
+- Check bundle size against thresholds
+- Validate no development code in production bundles
+
+## Shell Execution Safety
+
+### Input Sanitization
+- Never pass user input directly to shell commands
+- Validate and sanitize all external input
+- Use parameterized execution when possible
+- Prefer Bun APIs over shell commands
+
+**Rationale**: Unsanitized input enables command injection attacks.
+
+### Shell Script Best Practices
+- Quote all variables in shell scripts
+- Use `set -euo pipefail` for error detection
+- Check exit codes explicitly
+- Log command execution for debugging
+
+### Subprocess Execution
+- Use Bun's `$` template literal for safe execution
+- Avoid `bash -c` with string concatenation
+- Escape special characters properly
+- Set appropriate timeout for subprocesses
+
+## Docker Integration
+
+### Base Images
+- Use official `oven/bun` images
+- Pin specific Bun version tags (not `latest`)
+- Update base images regularly for security patches
+- Document Bun version in Dockerfile comments
+
+**Rationale**: Version pinning ensures reproducible builds; `latest` tag may introduce breaking changes.
+
+### Dependency Caching
+- Copy `package.json` and `bun.lock*` before source code
+- Run `bun install` before copying application code
+- Leverage Docker layer caching for dependencies
+- Invalidate cache only when dependencies change
+
+### Lock File Enforcement
+- Always use `--frozen-lockfile` flag in Dockerfiles
+- Fail builds if lock file is modified
+- Never run plain `bun install` in images
+
+### Multi-Stage Builds
+- Use separate stages for build and runtime
+- Install only production dependencies in final stage
+- Use `--production` flag for runtime dependencies
+- Copy only necessary artifacts to runtime stage
+
+**Rationale**: Multi-stage builds reduce final image size and attack surface.
+
+### Image Optimization
+- Minimize layer count
+- Remove unnecessary files before final stage
+- Use `.dockerignore` to exclude files
+- Scan images for vulnerabilities regularly
+
+**✅ Good Example (copy dependencies first)**
 ```dockerfile
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile --production
 ```
 
-**❌ 悪い例（キャッシュが効きにくい）**
+**❌ Bad Example (poor cache utilization)**
 ```dockerfile
 COPY . .
 RUN bun install
 ```
 
-## 検証（生成後に意識すること）
+## Validation and Verification
 
-- CI: `bun ci` → `bunx tsc --noEmit` → `bun test` の順で通る構成にする
-- 依存追加/更新: `trustedDependencies` / `overrides` / `minimumReleaseAge` の影響を確認する
+### CI Pipeline Validation
+- Configure pipeline: `bun ci` → `bunx tsc --noEmit` → `bun test`
+- Verify all steps pass before merge
+- Run linting before type checking
+- Execute tests with coverage reporting
+
+### Dependency Changes
+- Review `trustedDependencies` impact after adding packages
+- Verify `overrides` still necessary after updates
+- Check `minimumReleaseAge` affects new dependencies
+- Run security audit after dependency updates
+
+### Pre-Commit Checklist
+- Lock file committed if dependencies changed
+- Type checking passes locally
+- All tests pass
+- No secrets in code or configuration
+- Build succeeds for target environment
+
+### Pre-Merge Checklist
+- CI pipeline green
+- Code review completed
+- Security changes reviewed by security team
+- Documentation updated
+- Breaking changes documented in changelog
+
+## Common Anti-Patterns
+
+### Avoid: Ignoring Lock Files
+**Bad**: Running `bun install` and not committing lock file changes
+**Good**: Commit lock file changes immediately after dependency modifications
+
+### Avoid: Trusting All Dependencies
+**Bad**: Setting `trustedDependencies: ["*"]`
+**Good**: List only necessary packages explicitly
+
+### Avoid: Skipping Type Checking
+**Bad**: Relying only on `bun run` for verification
+**Good**: Always run `tsc --noEmit` in CI
+
+### Avoid: .env in Production
+**Bad**: Deploying `.env` files to production
+**Good**: Inject environment variables through platform tools
+
+### Avoid: Undefined Build Targets
+**Bad**: Using default build settings
+**Good**: Explicitly set `target` and `format` options
+
+## Tool Versions
+
+- Bun: >= 1.0.0 (specify exact version in CI)
+- TypeScript: >= 5.0.0 (for modern type system features)
+- Node.js compatibility: Verify if using Node.js APIs
+
+## References
+
+- [Bun Official Documentation](https://bun.sh/docs)
+- [Bun Runtime APIs](https://bun.sh/docs/api)
+- [Bun Test Runner](https://bun.sh/docs/cli/test)
+- [Bun Bundler](https://bun.sh/docs/bundler)

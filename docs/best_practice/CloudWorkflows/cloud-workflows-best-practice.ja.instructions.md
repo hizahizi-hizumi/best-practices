@@ -1,33 +1,33 @@
 ---
-description: 'Best practices for Google Cloud Workflows YAML files with security and error handling'
+description: 'セキュリティとエラーハンドリングを備えたGoogle Cloud Workflows YAMLファイルのベストプラクティス'
 applyTo: '**/*.yaml, **/*.yml'
 ---
 
-# Cloud Workflows Best Practices
+# Cloud Workflowsベストプラクティス
 
-Guidelines for creating secure and reliable HTTP endpoints with Cloud Workflows.
+Cloud Workflowsで安全で信頼性の高いHTTPエンドポイントを作成するためのガイドライン。
 
-## Purpose and Scope
+## 目的と適用範囲
 
-Apply best practices to Cloud Workflows YAML files to ensure security, error handling, and performance optimization.
+Cloud Workflows YAMLファイルにベストプラクティスを適用し、セキュリティ、エラーハンドリング、パフォーマンス最適化を確保する。
 
-## Core Principles
+## 核となる原則
 
-- Implement try/except and retry policies for all external calls
-- Store sensitive data in Secret Manager, never hardcode
-- Use dedicated service accounts with minimum required permissions
-- Enable structured logging for all critical events
-- Parallelize independent steps with `parallel` blocks
+- すべての外部呼び出しにtry/exceptとリトライポリシーを実装する
+- 機密データはSecret Managerに保存し、決してハードコードしない
+- 最小限の必要な権限を持つ専用サービスアカウントを使用する
+- すべての重要なイベントに対して構造化ログを有効にする
+- `parallel`ブロックで独立したステップを並列化する
 
-**Rationale**: These principles prevent runtime failures, protect credentials, and optimize execution time
+**根拠**: これらの原則は、ランタイム障害を防ぎ、認証情報を保護し、実行時間を最適化する
 
-## HTTP Requests
+## HTTPリクエスト
 
-### URL Configuration
+### URL設定
 
-Use environment variables or Secret Manager for URLs, never hardcode.
+URLには環境変数またはSecret Managerを使用し、決してハードコードしない。
 
-**Recommended**:
+**推奨**:
 ```yaml
 - call_api:
     call: http.get
@@ -36,7 +36,7 @@ Use environment variables or Secret Manager for URLs, never hardcode.
       timeout: 60
 ```
 
-**Not Recommended**:
+**非推奨**:
 ```yaml
 - call_api:
     call: http.get
@@ -44,13 +44,13 @@ Use environment variables or Secret Manager for URLs, never hardcode.
       url: https://prod-api.example.com/data
 ```
 
-**Rationale**: Hardcoded URLs prevent deployment across environments and expose internal infrastructure.
+**根拠**: ハードコードされたURLは環境間でのデプロイを妨げ、内部インフラストラクチャを露出させる。
 
-### Timeout Configuration
+### タイムアウト設定
 
-Set explicit timeout for every HTTP request (maximum 1,800 seconds).
+すべてのHTTPリクエストに明示的なタイムアウトを設定する（最大1,800秒）。
 
-**Rationale**: Prevents workflows from hanging indefinitely on unresponsive endpoints.
+**根拠**: 応答のないエンドポイントでワークフローが無期限にハングするのを防ぐ。
 
 ```yaml
 - api_call_with_timeout:
@@ -60,11 +60,11 @@ Set explicit timeout for every HTTP request (maximum 1,800 seconds).
       timeout: 300
 ```
 
-### Authentication
+### 認証
 
-#### Google Cloud APIs (OAuth2)
+#### Google Cloud API (OAuth2)
 
-Use OAuth2 authentication for Google Cloud API calls.
+Google Cloud API呼び出しにはOAuth2認証を使用する。
 
 ```yaml
 - call_gcp_api:
@@ -78,7 +78,7 @@ Use OAuth2 authentication for Google Cloud API calls.
 
 #### Cloud Run / Cloud Functions (OIDC)
 
-Use OIDC authentication for Cloud Run and Cloud Functions.
+Cloud RunとCloud FunctionsにはOIDC認証を使用する。
 
 ```yaml
 - call_cloud_function:
@@ -91,11 +91,11 @@ Use OIDC authentication for Cloud Run and Cloud Functions.
         message: "Hello from Workflows"
 ```
 
-#### External APIs (Bearer Token)
+#### 外部API (Bearerトークン)
 
-Retrieve tokens from Secret Manager for external API authentication.
+外部API認証にはSecret Managerからトークンを取得する。
 
-**Rationale**: Prevents token exposure in version control and logs.
+**根拠**: バージョン管理とログでのトークン露出を防ぐ。
 
 ```yaml
 - get_api_key:
@@ -112,13 +112,13 @@ Retrieve tokens from Secret Manager for external API authentication.
         Authorization: Bearer ${api_key}
 ```
 
-## Error Handling
+## エラーハンドリング
 
-### Try/Except Blocks
+### Try/Exceptブロック
 
-Wrap all external calls in try/except blocks.
+すべての外部呼び出しをtry/exceptブロックでラップする。
 
-**Rationale**: Prevents workflow failures from propagating without proper handling.
+**根拠**: 適切なハンドリングなしでワークフローの失敗が伝播するのを防ぐ。
 
 ```yaml
 - safe_api_call:
@@ -154,9 +154,9 @@ Wrap all external calls in try/except blocks.
     return: "Access forbidden"
 ```
 
-### Error Logging
+### エラーログ
 
-Log all errors with structured JSON format including timestamp and context.
+タイムスタンプとコンテキストを含む構造化JSON形式ですべてのエラーをログに記録する。
 
 ```yaml
 - log_error:
@@ -170,13 +170,13 @@ Log all errors with structured JSON format including timestamp and context.
         timestamp: ${sys.now()}
 ```
 
-## Retry Policies
+## リトライポリシー
 
-### Idempotent Operations (GET requests)
+### べき等操作（GETリクエスト）
 
-Use `http.default_retry` for idempotent operations.
+べき等操作には`http.default_retry`を使用する。
 
-**Rationale**: Safe to retry GET requests without side effects.
+**根拠**: GETリクエストは副作用なしにリトライしても安全である。
 
 ```yaml
 - idempotent_call:
@@ -187,11 +187,11 @@ Use `http.default_retry` for idempotent operations.
     retry: ${http.default_retry}
 ```
 
-### Non-Idempotent Operations (POST/PUT requests)
+### 非べき等操作（POST/PUTリクエスト）
 
-Use `http.default_retry_non_idempotent` for operations with side effects.
+副作用のある操作には`http.default_retry_non_idempotent`を使用する。
 
-**Rationale**: Prevents duplicate resource creation or data corruption.
+**根拠**: リソースの重複作成やデータ破損を防ぐ。
 
 ```yaml
 - non_idempotent_call:
@@ -203,11 +203,11 @@ Use `http.default_retry_non_idempotent` for operations with side effects.
     retry: ${http.default_retry_non_idempotent}
 ```
 
-### Custom Retry Policies
+### カスタムリトライポリシー
 
-Define custom predicates to retry only on specific error codes.
+特定のエラーコードのみをリトライするカスタム述語を定義する。
 
-**Rationale**: Avoids retrying permanent failures (4xx errors) while handling transient issues (5xx errors).
+**根拠**: 永続的な失敗（4xxエラー）のリトライを避けながら、一時的な問題（5xxエラー）を処理する。
 
 ```yaml
 main:
@@ -239,13 +239,13 @@ custom_retry_predicate:
         return: false
 ```
 
-## Logging
+## ログ記録
 
-### Structured Logging
+### 構造化ログ
 
-Use structured JSON logs for all significant events.
+すべての重要なイベントに対して構造化JSONログを使用する。
 
-**Rationale**: Enables efficient querying and monitoring in Cloud Logging.
+**根拠**: Cloud Loggingでの効率的なクエリとモニタリングを可能にする。
 
 ```yaml
 - log_structured_data:
@@ -262,22 +262,22 @@ Use structured JSON logs for all significant events.
           timestamp: ${sys.now()}
 ```
 
-### Log Levels
+### ログレベル
 
-Use appropriate severity levels:
-- `DEBUG`: Debug information
-- `INFO`: General information (recommended for normal flow)
-- `WARNING`: Warning conditions
-- `ERROR`: Error conditions
-- `CRITICAL`: Critical errors requiring immediate attention
+適切な重要度レベルを使用する:
+- `DEBUG`: デバッグ情報
+- `INFO`: 一般情報（通常フローに推奨）
+- `WARNING`: 警告状態
+- `ERROR`: エラー状態
+- `CRITICAL`: 即座の対応が必要な重大なエラー
 
-## Performance Optimization
+## パフォーマンス最適化
 
-### Parallel Execution
+### 並列実行
 
-Execute independent steps in parallel using `parallel` blocks.
+`parallel`ブロックを使用して独立したステップを並列実行する。
 
-**Rationale**: Reduces total workflow execution time when steps have no dependencies.
+**根拠**: ステップ間に依存関係がない場合、全体のワークフロー実行時間を短縮する。
 
 ```yaml
 - parallel_api_calls:
@@ -307,11 +307,11 @@ Execute independent steps in parallel using `parallel` blocks.
                     - results[1]: ${response2.body}
 ```
 
-### Memory Optimization
+### メモリ最適化
 
-Clear large objects after extracting needed data by assigning `null`.
+必要なデータを抽出した後、`null`を割り当てて大きなオブジェクトをクリアする。
 
-**Rationale**: Prevents memory exhaustion in long-running workflows.
+**根拠**: 長時間実行されるワークフローでのメモリ枯渇を防ぐ。
 
 ```yaml
 - get_filtered_data:
@@ -323,14 +323,14 @@ Clear large objects after extracting needed data by assigning `null`.
 - extract_needed_data:
     assign:
       - needed_items: ${response.body.items[0:10]}
-      - response: null  # Clear large objects no longer needed
+      - response: null  # もう必要ない大きなオブジェクトをクリア
 ```
 
-### Subworkflows
+### サブワークフロー
 
-Extract reusable logic into subworkflows.
+再利用可能なロジックをサブワークフローに抽出する。
 
-**Rationale**: Improves code reusability and testability.
+**根拠**: コードの再利用性とテスト可能性を向上させる。
 
 ```yaml
 main:
@@ -352,13 +352,13 @@ validate_and_process_user:
         return: ${user}
 ```
 
-## Security
+## セキュリティ
 
 ### Secret Manager
 
-Store all sensitive data in Secret Manager, never in workflow files.
+すべての機密データをSecret Managerに保存し、決してワークフローファイルに含めない。
 
-**Rationale**: Prevents credential exposure in version control and logs.
+**根拠**: バージョン管理とログでの認証情報の露出を防ぐ。
 
 ```yaml
 - get_credentials:
@@ -375,11 +375,11 @@ Store all sensitive data in Secret Manager, never in workflow files.
         Authorization: ${db_password}
 ```
 
-### Input Validation
+### 入力検証
 
-Validate all workflow inputs before processing.
+処理前にすべてのワークフロー入力を検証する。
 
-**Rationale**: Prevents runtime errors and security vulnerabilities from malformed input.
+**根拠**: 不正な形式の入力によるランタイムエラーとセキュリティ脆弱性を防ぐ。
 
 ```yaml
 main:
@@ -393,22 +393,22 @@ main:
             raise: "Missing required field: data_type"
 ```
 
-### Service Account Permissions
+### サービスアカウントの権限
 
-Follow least privilege principle:
-- Create dedicated service accounts for each workflow
-- Never use default Compute Engine service account
-- Grant only required permissions
+最小権限の原則に従う:
+- 各ワークフローに専用のサービスアカウントを作成する
+- デフォルトのCompute Engineサービスアカウントは決して使用しない
+- 必要な権限のみを付与する
 
-**Rationale**: Limits blast radius if credentials are compromised.
+**根拠**: 認証情報が侵害された場合の影響範囲を制限する。
 
-## Long-Running Operations
+## 長時間実行される操作
 
-### Polling Pattern
+### ポーリングパターン
 
-Use polling with exponential backoff for long-running operations.
+長時間実行される操作には指数バックオフを使用したポーリングを使用する。
 
-**Rationale**: Balances responsiveness with resource efficiency.
+**根拠**: 応答性とリソース効率のバランスを取る。
 
 ```yaml
 - start_long_operation:
@@ -458,11 +458,11 @@ Use polling with exponential backoff for long-running operations.
     return: ${status_response.body}
 ```
 
-### Callback Pattern
+### コールバックパターン
 
-Use callback endpoints for event-driven long-running operations.
+イベント駆動の長時間実行操作にはコールバックエンドポイントを使用する。
 
-**Rationale**: More efficient than polling for operations that can notify on completion.
+**根拠**: 完了時に通知できる操作に対して、ポーリングよりも効率的である。
 
 ```yaml
 - create_callback:
@@ -489,17 +489,17 @@ Use callback endpoints for event-driven long-running operations.
     return: ${callback_request.http_request.body}
 ```
 
-## Cost Optimization
+## コスト最適化
 
-### Internal Step Domains
+### 内部ステップドメイン
 
-Use Google Cloud domains to reduce costs (billed as internal steps):
+コストを削減するためにGoogle Cloudドメインを使用する（内部ステップとして請求される）:
 - `*.appspot.com`
 - `*.cloud.goog`
 - `*.cloudfunctions.net`
 - `*.run.app`
 
-**Recommended**:
+**推奨**:
 ```yaml
 - call_cloud_run:
     call: http.get
@@ -507,13 +507,13 @@ Use Google Cloud domains to reduce costs (billed as internal steps):
       url: https://myservice-xyz.run.app/data
 ```
 
-**Rationale**: Internal steps are billed at lower rates than external HTTP calls.
+**根拠**: 内部ステップは外部HTTP呼び出しよりも低い料金で請求される。
 
-### Minimize Logging Overhead
+### ログのオーバーヘッドを最小化する
 
-Avoid logging inside loops; log summaries instead.
+ループ内でのログ記録を避け、代わりに要約をログに記録する。
 
-**Not Recommended**:
+**非推奨**:
 ```yaml
 - process_items:
     for:
@@ -521,12 +521,12 @@ Avoid logging inside loops; log summaries instead.
       in: ${items}
       steps:
         - log_each_item:
-            call: sys.log  # Expensive
+            call: sys.log  # 高コスト
             args:
               json: ${item}
 ```
 
-**Recommended**:
+**推奨**:
 ```yaml
 - process_items:
     for:
@@ -546,34 +546,34 @@ Avoid logging inside loops; log summaries instead.
         status: "completed"
 ```
 
-## Documentation
+## ドキュメント
 
-Include comments in workflows for purpose, owner, and step descriptions.
+目的、所有者、ステップの説明をワークフローにコメントとして含める。
 
-**Rationale**: Improves maintainability for team members and future modifications.
+**根拠**: チームメンバーと将来の変更に対する保守性を向上させる。
 
 ```yaml
-# Data Processing Workflow
-# Purpose: Fetch, process, and store data from external API
-# Owner: Backend Team
-# Last Updated: 2026-01-03
+# データ処理ワークフロー
+# 目的: 外部APIからデータを取得、処理、保存する
+# 所有者: バックエンドチーム
+# 最終更新: 2026-01-03
 
 main:
   params: [input]
   steps:
-    # Step 1: Input Validation
-    # Required fields: user_id, data_type
+    # ステップ1: 入力検証
+    # 必須フィールド: user_id, data_type
     - validate_input:
         switch:
           - condition: ${not("user_id" in input)}
             raise: "Missing required field: user_id"
 ```
 
-## Deployment
+## デプロイ
 
-### Call Log Level
+### 呼び出しログレベル
 
-Set `--call-log-level=log-all-calls` for development and troubleshooting.
+開発とトラブルシューティングには`--call-log-level=log-all-calls`を設定する。
 
 ```bash
 gcloud workflows deploy my-workflow \
@@ -582,9 +582,9 @@ gcloud workflows deploy my-workflow \
     --service-account=workflow-sa@PROJECT_ID.iam.gserviceaccount.com
 ```
 
-### Environment Variables
+### 環境変数
 
-Set environment variables at deployment using `--set-env-vars`.
+`--set-env-vars`を使用してデプロイ時に環境変数を設定する。
 
 ```bash
 gcloud workflows deploy my-workflow \
@@ -592,22 +592,22 @@ gcloud workflows deploy my-workflow \
     --set-env-vars=ENVIRONMENT=production,API_BASE_URL=https://api.prod.example.com
 ```
 
-## Pre-Deployment Checklist
+## デプロイ前チェックリスト
 
-Verify before deployment:
+デプロイ前に以下を確認する:
 
-- [ ] All HTTP requests have explicit timeouts
-- [ ] Error handling and retry policies implemented
-- [ ] Sensitive data stored in Secret Manager
-- [ ] No hardcoded URLs or credentials
-- [ ] Dedicated service account configured
-- [ ] Structured logging implemented
-- [ ] Independent steps parallelized
-- [ ] Input validation implemented
-- [ ] Workflow includes documentation comments
+- [ ] すべてのHTTPリクエストに明示的なタイムアウトがある
+- [ ] エラーハンドリングとリトライポリシーが実装されている
+- [ ] 機密データがSecret Managerに保存されている
+- [ ] ハードコードされたURLや認証情報がない
+- [ ] 専用のサービスアカウントが設定されている
+- [ ] 構造化ログが実装されている
+- [ ] 独立したステップが並列化されている
+- [ ] 入力検証が実装されている
+- [ ] ワークフローにドキュメントコメントが含まれている
 
-## References
+## 参考資料
 
-- [Cloud Workflows Documentation](https://docs.cloud.google.com/workflows/docs)
-- [Security Best Practices](https://docs.cloud.google.com/workflows/docs/security-best-practices)
-- [HTTP Callback Example](https://docs.cloud.google.com/workflows/docs/creating-callback-endpoints)
+- [Cloud Workflowsドキュメント](https://docs.cloud.google.com/workflows/docs)
+- [セキュリティベストプラクティス](https://docs.cloud.google.com/workflows/docs/security-best-practices)
+- [HTTPコールバックの例](https://docs.cloud.google.com/workflows/docs/creating-callback-endpoints)
