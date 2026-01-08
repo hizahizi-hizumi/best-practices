@@ -1,4 +1,3 @@
-```instructions
 ---
 description: 'Vitestを使用したテストコードを書く際のベストプラクティスと推奨パターン'
 applyTo: '**/*.test.ts, **/*.spec.ts, **/*.test.tsx, **/*.spec.tsx, **/*.test.js, **/*.spec.js, **/*.test.jsx, **/*.spec.jsx, **/tests/**/*.ts, **/tests/**/*.tsx, **/tests/**/*.js, **/tests/**/*.jsx, **/test/**/*.ts, **/test/**/*.tsx, **/test/**/*.js, **/test/**/*.jsx'
@@ -454,5 +453,3 @@ export default defineConfig({
 2. テストの独立性とクリーンアップ
 3. 非同期操作の適切な処理
 4. 明確なテスト名と適切なマッチャー
-
-```
