@@ -1,4 +1,3 @@
-````instructions
 ---
 description: 'Ruff を使用した Python コード品質管理のベストプラクティスとガイドライン'
 applyTo: '**/*.py, **/pyproject.toml, **/ruff.toml, **/.ruff.toml'
@@ -383,5 +382,3 @@ ignore = ["E501"]
 
 - [Ruff ドキュメント](https://docs.astral.sh/ruff/)
 - [ルールリファレンス](https://docs.astral.sh/ruff/rules/)
-
-````
