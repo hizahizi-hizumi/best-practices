@@ -1,4 +1,3 @@
-````instructions
 ---
 description: 'mypy による Python コードの型チェックのベストプラクティス。厳密な型アノテーション、段階的な厳密化、効率的な設定管理のガイドラインを提供する。'
 applyTo: '**/*.py, **/test_*.py, **/*_test.py, **/tests/**/*.py, **/conftest.py'
@@ -445,5 +444,3 @@ mypy --show-error-codes src/
 - [ ] テストコードを型チェックする
 - [ ] pyproject.toml で段階的に strict モードを有効にする
 - [ ] CI/CD で型チェックを自動化する
-
-````
