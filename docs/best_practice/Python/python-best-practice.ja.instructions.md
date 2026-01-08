@@ -1,4 +1,3 @@
-````instructions
 ---
 description: 'PEP 8 準拠の Python コーディング規約とベストプラクティス'
 applyTo: '**/*.py'
@@ -473,5 +472,3 @@ safe_value = ast.literal_eval(user_input)
 - [Python 公式ドキュメント](https://docs.python.org/ja/3/)
 - [The Zen of Python (PEP 20)](https://peps.python.org/pep-0020/)
 - [Type Hints (PEP 484)](https://peps.python.org/pep-0484/)
-
-````
