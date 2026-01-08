@@ -1,4 +1,3 @@
-````instructions
 ---
 description: 'uvを用いたPythonプロジェクト管理のベストプラクティス'
 applyTo: 'pyproject.toml, uv.lock, **/*.py'
@@ -459,5 +458,3 @@ requests = "30 days"
 - [公式ドキュメント](https://docs.astral.sh/uv/)
 - [GitHub](https://github.com/astral-sh/uv)
 - [setup-uv Action](https://github.com/astral-sh/setup-uv)
-
-````
