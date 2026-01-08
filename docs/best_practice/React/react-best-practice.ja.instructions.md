@@ -1,4 +1,3 @@
-````instructions
 ---
 description: 'React コンポーネント開発のベストプラクティス'
 applyTo: '**/*.{jsx,tsx,js,ts}'
@@ -370,5 +369,3 @@ npm run build    # ビルド
 - [React のルール](https://react.dev/reference/rules)
 - [Effect が不要な場合](https://react.dev/learn/you-might-not-need-an-effect)
 - [コンポーネントの純粋性を保つ](https://react.dev/learn/keeping-components-pure)
-
-````
