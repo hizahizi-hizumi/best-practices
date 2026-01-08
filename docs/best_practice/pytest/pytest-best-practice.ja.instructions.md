@@ -1,4 +1,3 @@
-````instructions
 ---
 description: '高品質なテストコードを作成するための pytest ベストプラクティス'
 applyTo: '**/test_*.py, **/*_test.py, **/tests/**/*.py, **/conftest.py'
@@ -681,5 +680,3 @@ jobs:
 - [pytest 公式ドキュメント](https://docs.pytest.org/)
 - [良い統合プラクティス](https://docs.pytest.org/en/stable/explanation/goodpractices.html)
 - [フィクスチャの使い方](https://docs.pytest.org/en/stable/how-to/fixtures.html)
-
-````
