@@ -2,5 +2,8 @@
   "cSpell.words": [
     "websearch",
     "websearchforcopilot"
-  ]
+  ],
+  "[markdown]": {
+    "editor.tabSize": 2
+  }
 }
