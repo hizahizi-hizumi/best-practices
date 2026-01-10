@@ -1,7 +1,7 @@
 ---
 description: '未コミット差分を分析し、コミット粒度ルールに沿ってコミット計画とコミットを作成'
 agent: 'agent'
-tools: ['read', 'runCommands']
+tools: ['execute/getTerminalOutput', 'execute/runInTerminal', 'read/problems', 'read/readFile', 'todo']
 ---
 
 # 未コミット差分のコミット（Commit Helper）
@@ -68,7 +68,7 @@ tools: ['read', 'runCommands']
   - `feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `style`, `chore`, `build`, `ci`, `dev`, `revert`
 
 ### フェーズ 4: コミットの実行（破壊的操作）
-**このフェーズは、ユーザーが「実行して」と明示した場合のみ実施する。**  
+**このフェーズは、ユーザーが「実行して」と明示した場合のみ実施する。**
 実施する場合も、実行前に「実行するコマンド列」を提示し、直前で再確認する。
 
 - コミットごとに、意図した差分だけが入るようにステージングする。
